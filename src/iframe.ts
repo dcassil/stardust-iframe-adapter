@@ -11,5 +11,14 @@
  */
 export * from "./protocol/index.js";
 
-// SIFR-I-0002 will add the iframe-side provider/components exports here, e.g.:
-//   export { StardustAdapterProvider } from "./iframe/StardustAdapterProvider.js";
+/* -------------------------------------------------------------------------- */
+/* Iframe-side adapter surface (SIFR-I-0002)                                  */
+/* -------------------------------------------------------------------------- */
+
+// Pure discovery (SIFR-T-0006).
+export {
+  CONTAINER_INSET,
+  discoverTargets,
+  toGeometry,
+  type DiscoverTargetsOptions,
+} from "./iframe/discovery.js";
