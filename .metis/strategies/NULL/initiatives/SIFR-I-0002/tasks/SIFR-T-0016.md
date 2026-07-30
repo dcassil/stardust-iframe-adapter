@@ -4,14 +4,14 @@ level: task
 title: "Implement EditableTarget, content renderer, and style wrapper components"
 short_code: "SIFR-T-0016"
 created_at: 2026-07-30T16:03:06.500976+00:00
-updated_at: 2026-07-30T16:03:06.500976+00:00
+updated_at: 2026-07-30T16:48:46.098498+00:00
 parent: SIFR-I-0002
 blocked_by: []
 archived: false
 
 tags:
   - "#task"
-  - "#phase/todo"
+  - "#phase/completed"
 
 
 exit_criteria_met: false
@@ -28,6 +28,10 @@ initiative_id: SIFR-I-0002
 ## Objective **[REQUIRED]**
 
 Implement the iframe-side components that emit the `data-*` attributes discovery (SIFR-T-0006) and the style engine (SIFR-I-0005) rely on: `EditableTarget` (successor to `CmsTarget.tsx`) emitting `data-cms` / `data-cms-container-target`; a content renderer (successor to `CmsContent.tsx`) emitting `data-cms-content` / `data-cms-container` and rendering by protocol-defined content type (text/number/image/container); and a style wrapper (successor to `CmsStyled.tsx`) emitting `data-style-element` / `data-style-name` / `data-style-id` / `data-style-group` / `data-style-rules`. Content types must come from the SIFR-I-0001 protocol, not hardcoded Stardust app types, keeping the package app-agnostic.
+
+## Acceptance Criteria
+
+## Acceptance Criteria
 
 ## Acceptance Criteria **[REQUIRED]**
 
@@ -72,4 +76,25 @@ Attribute name drift between components and discovery would silently break mappi
 
 ## Status Updates **[REQUIRED]**
 
-*To be added during implementation*
+## Completion notes
+
+Added `EditableTarget`, `ContentRenderer`, `StyleElement` (successors to
+CmsTarget/CmsContent/CmsStyled), all react-only + protocol-typed (NFR-003).
+`EditableTarget` emits `data-cms` and (only when `isContainer`)
+`data-cms-container-target`, and renders host-injected content pulled from
+`StardustContentContext`, each item wrapped in `StyleElement`. `ContentRenderer`
+emits `data-cms-content` (+ `data-cms-container` for containers) and dispatches
+on the protocol `ContentKind` discriminant (text/number/image/container) with an
+exhaustiveness `never` guard and no Stardust-app types; container content
+renders two nested `EditableTarget`s. `StyleElement` emits all five
+`data-style-*` attributes and passes the child through. Centralized every
+attribute name in `src/iframe/attributes.ts`, now the single source shared with
+discovery (SIFR-T-0006 refactored to import it) — eliminating name drift.
+Protocol change: firmed up `ContentPayload` (was minimal `{html?,data?}`) with a
+required, serializable `content: CmsContent` carrying `{id,type,value?,styleGroup?,
+column?,data?}` and a new `ContentKind` union — grounded in the prototype
+CmsContent switch, kept app-agnostic and structured-clone-safe; updated the
+protocol fixture accordingly. Tests (`components.test.tsx`): per-component
+`data-*` emission for text/number/image/container + style groups + container vs
+non-container, plus an end-to-end mount-then-`discoverTargets` test proving the
+emitted attributes are exactly what discovery reads. 42 tests green.

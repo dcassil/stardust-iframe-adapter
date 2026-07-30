@@ -4,14 +4,14 @@ level: task
 title: "TargetAreaOverlay And ContentItemOverlay Unstyled Primitives With Drag/Drop Wiring"
 short_code: "SIFR-T-0019"
 created_at: 2026-07-30T16:03:40.677588+00:00
-updated_at: 2026-07-30T16:03:40.677588+00:00
+updated_at: 2026-07-30T16:48:51.414883+00:00
 parent: SIFR-I-0003
 blocked_by: []
 archived: false
 
 tags:
   - "#task"
-  - "#phase/todo"
+  - "#phase/completed"
 
 
 exit_criteria_met: false
@@ -28,6 +28,10 @@ initiative_id: SIFR-I-0003
 ## Objective
 
 Implement the two stateless, unstyled React overlay primitives that render absolutely-positioned boxes from mapped geometry and forward pointer/drag events as structured callbacks: `TargetAreaOverlay` (successor to `code_temp/Stardust-CMS-APP-Original-backup/client/builder/src/cms_targets/CMSTargetAreas.tsx`) and `ContentItemOverlay` (successor to `CMSTargetItem.tsx`). These satisfy REQ-004, NFR-004 (no visual styling beyond positioning), and provide the drag/drop surface that emits the structured operations of REQ-005. They consume `MappedGeometry`/`MappedTarget` from SIFR-T-0014/SIFR-T-0018 and the operation callbacks/types from SIFR-T-0020.
+
+## Acceptance Criteria
+
+## Acceptance Criteria
 
 ## Acceptance Criteria
 
@@ -66,6 +70,10 @@ Keeping styling out is a hard requirement (NFR-004) — a regression that adds v
 
 Recommended Agent: opus + medium
 
-## Status Updates
+## Completion notes
 
-*To be added during implementation*
+Implemented `src/host/overlays.tsx`: `TargetAreaOverlay` and `ContentItemOverlay`, both pure/presentational. Positioning is `position:absolute` + `top/left/width/height` from `MappedGeometry` only — no visual classes (NFR-004); both accept `className`/`style` (and the target accepts `itemClassName`/`itemStyle`). No Stardust contexts, no store (NFR-002). `TargetAreaOverlay` renders one `ContentItemOverlay` per child (empty box in the empty branch), computes insert index from the pointer's box-relative offset vs child midpoints, resolves drops via `opFromDataTransfer` + `dispatchOp`, and fires `onSelect(targetId)` on target-box click. `ContentItemOverlay` fires `onSelect(targetId, contentId)` on click and populates `dataTransfer` (`isMove/target/contentId/index`) on drag start for moves.
+
+Callback-signature reconciliation: the initiative/0020 specify positional callbacks (`onInsert(targetId,index,payload)`, `onMove(from,to)`, `onSelect(targetId,contentId?)`) confirmed by TC-002. Added `OperationCallbacks` + `dispatchOp` to `operations.ts`; `useStardustHost` options now extend `OperationCallbacks` and the hook returns them bundled as `callbacks` for spreading onto overlays. Exported `TargetAreaOverlay`, `ContentItemOverlay`, their prop types, `OperationCallbacks`, and `dispatchOp` from `src/host.ts`.
+
+9 tests (jsdom) in `overlays.test.tsx`: TC-001 mapped coords + populated branch; empty branch; TC-002 drop → `onInsert('t1',1,{type:'text'})` once; existing-item drop → `onMove(from,to)`; target-click select; and `ContentItemOverlay` coords/no-styling, click-select, dragStart dataTransfer, consumer className/style. A `fireDrop` helper builds the drop event with `clientY`+`dataTransfer` since jsdom's default drop init omits `clientY`. All green (45 total). `tsc --noEmit` clean.

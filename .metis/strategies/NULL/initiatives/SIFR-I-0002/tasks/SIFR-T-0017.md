@@ -4,14 +4,14 @@ level: task
 title: "Integration test against mock frame-link peer and wire iframe-side package entry export"
 short_code: "SIFR-T-0017"
 created_at: 2026-07-30T16:03:08.156167+00:00
-updated_at: 2026-07-30T16:03:08.156167+00:00
+updated_at: 2026-07-30T16:51:42.851091+00:00
 parent: SIFR-I-0002
 blocked_by: []
 archived: false
 
 tags:
   - "#task"
-  - "#phase/todo"
+  - "#phase/completed"
 
 
 exit_criteria_met: false
@@ -28,6 +28,10 @@ initiative_id: SIFR-I-0002
 ## Objective **[REQUIRED]**
 
 Add an integration test that mounts `StardustAdapterProvider` with fake content and a mock `frame-link` peer in jsdom, exercising the full request/response and observer/push flow together, and wire the public iframe-side entry export of `@stardust-cms/iframe-adapter` (`StardustAdapterProvider`, `EditableTarget`, content renderer, style wrapper, and `discoverTargets` if public). This is the closing Phase 4 task that proves tasks SIFR-T-0006/0013/0015/0016 compose correctly and makes the package consumable by SIFR-I-0003 (host overlays) and SIFR-I-0004 (demo).
+
+## Acceptance Criteria
+
+## Acceptance Criteria
 
 ## Acceptance Criteria **[REQUIRED]**
 
@@ -70,4 +74,24 @@ Small and design-clear once 1–4 land, but export-map/build wiring can surface 
 
 ## Status Updates **[REQUIRED]**
 
-*To be added during implementation*
+## Completion notes
+
+Added `src/iframe/integration.test.tsx`: mounts `StardustAdapterProvider` +
+`EditableTarget` tree with the mock frame-link peer in jsdom and exercises all
+prior tasks together. TC-001: the host pushes content via `cms/sendElements`, then
+`cms/requestTargetPositions` returns a `ContentTarget[]` matching the mounted tree
+(ids `grid`/`hero`, hero's single `c1` child with `styleGroup:"body"`, geometry as
+a plain object — not a DOMRect). TC-002: with rAF + Resize/MutationObserver
+stubbed, an 8x scroll+resize + observer burst produces exactly one additional
+`cms/sendElementPositions` push per frame (plus scroll state). Also verified
+`cms/sendElements` flows through the handler.
+
+Public entry: the package `.`/`./iframe` maps to `dist/iframe.js` built from
+`src/iframe.ts`, which now exports the full surface — `StardustAdapterProvider`,
+`EditableTarget`, `ContentRenderer`, `StyleElement`, `discoverTargets`/`toGeometry`,
+`usePositionPublishing`/`rafThrottle`/`readScrollState`, the `CHANNELS` +
+`useStardustHandler`/`useStardustSend` frame-link bindings, `StardustContentContext`,
+and the `ATTR_*` constants — all re-exporting the protocol. `npm run build`
+(tsconfig.build.json, extended to include `types/` for the peer declarations)
+succeeds; the built `dist/iframe.js` has no `import` of `./host` and the test-only
+`testing/` dir is excluded from the build. 45 tests green, `tsc --noEmit` clean.

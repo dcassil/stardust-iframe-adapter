@@ -4,14 +4,14 @@ level: task
 title: "Pure mapGeometry Transform: Scale And Scroll Projection With Exhaustive Unit Tests"
 short_code: "SIFR-T-0014"
 created_at: 2026-07-30T16:02:55.844650+00:00
-updated_at: 2026-07-30T16:02:55.844650+00:00
+updated_at: 2026-07-30T16:33:02.406693+00:00
 parent: SIFR-I-0003
 blocked_by: []
 archived: false
 
 tags:
   - "#task"
-  - "#phase/todo"
+  - "#phase/completed"
 
 
 exit_criteria_met: false
@@ -28,6 +28,10 @@ initiative_id: SIFR-I-0003
 ## Objective
 
 Implement `mapGeometry(geometry, { scale, scrollOffset })` — the single pure function that projects an iframe-reported `Geometry` rectangle into host-viewport coordinates. This is the correctness substrate every overlay and the demo depend on (REQ-003, NFR-001). It replaces the fragile, entangled inline scale/scroll math currently scattered across the prototype's `code_temp/Stardust-CMS-App/app/useFrame.tsx` (`containerSize.scale = containerSize.width / documentSize.width`) and `code_temp/Stardust-CMS-APP-Original-backup/client/builder/src/cms_targets/CMSTargetAreas.tsx` (absolute positioning from `target.positions.top/left/width/height`). The function must be framework-agnostic (no React import), consume the `Geometry` type defined in SIFR-I-0001's protocol module, and be the sole place overlay coordinates are computed.
+
+## Acceptance Criteria
+
+## Acceptance Criteria
 
 ## Acceptance Criteria
 
@@ -66,6 +70,6 @@ Fractional scale and mid-scroll resize are the primary edge cases (initiative Ri
 
 Recommended Agent: opus + high
 
-## Status Updates
+## Completion notes
 
-*To be added during implementation*
+Implemented `src/host/mapGeometry.ts` — pure `mapGeometry(geometry, { scale, scrollOffset })` returning `MappedGeometry {top,left,width,height}`. Imports only the `Geometry` type from the protocol; no React/DOM. Transform is exactly `(left-scrollX)*scale`, `(top-scrollY)*scale`, `width*scale`, `height*scale`. Deliberately omitted the prototype `-40` header offset (belongs on the hook). Exported `mapGeometry`, `MappedGeometry`, `GeometryTransform` from `src/host.ts`. 10 unit tests (`src/host/mapGeometry.test.ts`) cover identity, fractional scale, scroll translation, combined, zero width/height, zero scale, negative projection, purity/determinism, and NFR-001 1px-accuracy fixtures. `tsc --noEmit` clean; `vitest run` green.

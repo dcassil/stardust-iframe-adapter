@@ -29,7 +29,11 @@ Never act on, monitor, or stop any agent NOT listed here — it may belong to an
 
 | Wave | Initiative | Agent ID | Branch/worktree | Status |
 | ---- | ---------- | -------- | --------------- | ------ |
-| W1 | SIFR-I-0001 Protocol (T-0001..0005) | a32b84ce0fad381c2 | main | RUNNING |
+| W1 | SIFR-I-0001 Protocol (T-0001..0005) | a32b84ce0fad381c2 | main | DONE ✅ tsc clean, 14 tests, pkg @stardust-cms/iframe-adapter, commits→b767897 |
+| W2 | SIFR-I-0002 Iframe (T-0006,0013,0015,0016,0017) | af66800c31822125a | feat/0002-iframe @ ../wt-0002-iframe | DONE ✅ 45 tests, tsc clean. MODIFIED src/protocol/index.ts (ContentPayload now {content: CmsContent}, added ContentKind/CmsContent) + fixtures. Config: React 18, added types/frame-link-react.d.ts + tsconfig paths. |
+
+**MERGE/INTEGRATION (W2 → main):** conflicts expected — (a) protocol ContentPayload reshaped by 0002, consumed as old shape by 0003 → host typecheck may break; (b) React 18 (0002) vs 19 (0003) divergence in package.json/tsconfig/vitest.config; (c) two different frame-link resolution strategies. Resolve to ONE toolchain, get combined tsc clean + ALL tests green before Wave 3.
+| W2 | SIFR-I-0003 Host (T-0014,0018,0019,0020,0021) | ae68912977b103fb0 | feat/0003-host @ ../wt-0003-host | DONE ✅ 48 tests, tsc clean. NOTE: modified shared tsconfig.json/vitest.config.ts/package.json devDeps (React test infra) + built code_temp/frame-link dist. Expect config merge conflicts vs 0002. |
 
 ---
 

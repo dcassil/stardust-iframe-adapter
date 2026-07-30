@@ -4,14 +4,14 @@ level: task
 title: "Add ResizeObserver/MutationObserver plus throttled scroll/resize with leak-free cleanup"
 short_code: "SIFR-T-0015"
 created_at: 2026-07-30T16:03:04.995392+00:00
-updated_at: 2026-07-30T16:03:04.995392+00:00
+updated_at: 2026-07-30T16:45:17.090135+00:00
 parent: SIFR-I-0002
 blocked_by: []
 archived: false
 
 tags:
   - "#task"
-  - "#phase/todo"
+  - "#phase/completed"
 
 
 exit_criteria_met: false
@@ -28,6 +28,10 @@ initiative_id: SIFR-I-0002
 ## Objective **[REQUIRED]**
 
 Add the observer/update bundle to `StardustAdapterProvider`: a `ResizeObserver` on the root, a `MutationObserver` on the subtree, and throttled `scroll`/`resize` window handlers that recompute discovery and push `cms/sendElementPositions` and `cms/sendScrollPositions`. This is the prototype's known-defect area: `CmsBase.context.tsx` adds `resize`/`scroll` listeners with fresh arrow functions so `removeEventListener` never removes them (a listener leak), uses an empty dependency array while closing over `sendElementPositions`, and streams unthrottled. This task replaces that with named handlers held in refs, symmetric add/remove, observer `disconnect()`, and per-animation-frame throttling.
+
+## Acceptance Criteria
+
+## Acceptance Criteria
 
 ## Acceptance Criteria **[REQUIRED]**
 
@@ -72,4 +76,23 @@ Observer firing storms can still saturate the channel — mitigated by rAF coale
 
 ## Status Updates **[REQUIRED]**
 
-*To be added during implementation*
+## Completion notes
+
+Added `usePositionPublishing` (wired into `StardustAdapterProvider`) plus
+`rafThrottle` and `readScrollState`. Fixes all three prototype defects: (1)
+listeners are single stable references held in the effect scope, added and
+removed with the identical reference AND capture flag (`scroll` uses capture);
+(2) a `ResizeObserver` (on the root/`documentElement`) and a `MutationObserver`
+(subtree/childList/attributes) are established and `disconnect()`ed on cleanup;
+(3) every push is coalesced to one-per-animation-frame via `rafThrottle`, whose
+pending frame is cancelled on unmount so no post fires after teardown. Publishes
+`cms/sendElementPositions` + `cms/sendScrollPositions` (sends are fire-and-forget
+so pre-connect rejections are swallowed). Tests: `raf-throttle.test.ts`
+(coalesce burst → 1 run/frame, cancel drops pending), `scroll-state.test.ts`,
+and `usePositionPublishing.test.tsx` — symmetric add/remove references + observer
+disconnect (TC-001), zero net listeners across 5 mount/unmount cycles (NFR-002),
+one push per frame from a 10x scroll+resize+observer burst (TC-002/NFR-001).
+Also replaced fragile tsconfig `paths`-into-peer-source with a first-class
+`types/frame-link-react.d.ts` module declaration (the peer ships no dist) and a
+dist-types path mapping for `frame-link`; a shared test setup polyfills inert
+Resize/MutationObserver for jsdom.

@@ -4,14 +4,14 @@ level: task
 title: "Extract pure discoverTargets module with Geometry serialization and unit tests"
 short_code: "SIFR-T-0006"
 created_at: 2026-07-30T16:01:32.564616+00:00
-updated_at: 2026-07-30T16:01:32.564616+00:00
+updated_at: 2026-07-30T16:33:52.335601+00:00
 parent: SIFR-I-0002
 blocked_by: []
 archived: false
 
 tags:
   - "#task"
-  - "#phase/todo"
+  - "#phase/completed"
 
 
 exit_criteria_met: false
@@ -28,6 +28,10 @@ initiative_id: SIFR-I-0002
 ## Objective **[REQUIRED]**
 
 Extract a pure, framework-agnostic discovery module — `discoverTargets(root: Document | HTMLElement): ContentTarget[]` — from the prototype `code_temp/Stardust-CMS-App/demoApp/src/lib/CmsTarget.utils.ts` (`getElementsWithPositionData()`). The module walks `[data-cms]` and `[data-cms-content]` elements, converts each element's `getBoundingClientRect()` into the serializable `Geometry` type from SIFR-I-0001 (never a raw `DOMRect`), and returns a deterministic, document-ordered `ContentTarget[]`. This is the correctness substrate that host-side overlay mapping (SIFR-I-0003) consumes, so its determinism and serialization guarantees are load-bearing.
+
+## Acceptance Criteria
+
+## Acceptance Criteria
 
 ## Acceptance Criteria **[REQUIRED]**
 
@@ -74,4 +78,17 @@ The `-10` container inset may be layout-specific; isolate it as a documented con
 
 ## Status Updates **[REQUIRED]**
 
-*To be added during implementation*
+## Completion notes
+
+Implemented `src/iframe/discovery.ts`: pure `discoverTargets(root, options?)` +
+`toGeometry(rect)` + documented overridable `CONTAINER_INSET`. Imports only
+protocol types — no react/frame-link/window-event deps. Target `isContainer`
+uses `[data-cms-container-target]` (prototype `getIsTargetContainer`); child
+`isContainer` uses nested `[data-cms-content]` (prototype `getChildContent`),
+and the container child inset (`top-=inset; height-=inset`) is applied on the
+serialized plain object. 9 jsdom tests (empty target, geometry serialization,
+document order, multi-child indices/style-groups, container detection, inset +
+override, root scoping) — all green. Exported from `src/iframe.ts`.
+Test infra: added jsdom + @testing-library/react + react-dom@19 dev deps and a
+vitest alias mapping the `frame-link`/`frame-link-react` peers to their sibling
+TS source (they ship no dist), switching the test env to jsdom.

@@ -4,14 +4,14 @@ level: task
 title: "Host-Side Package Entry Export And Integration Test Against A Mock Frame-Link Peer"
 short_code: "SIFR-T-0021"
 created_at: 2026-07-30T16:03:44.023686+00:00
-updated_at: 2026-07-30T16:03:44.023686+00:00
+updated_at: 2026-07-30T16:50:43.536700+00:00
 parent: SIFR-I-0003
 blocked_by: []
 archived: false
 
 tags:
   - "#task"
-  - "#phase/todo"
+  - "#phase/completed"
 
 
 exit_criteria_met: false
@@ -28,6 +28,10 @@ initiative_id: SIFR-I-0003
 ## Objective
 
 Assemble the host-side public entry of `@stardust-cms/iframe-adapter` — exporting `useStardustHost`, `TargetAreaOverlay`, `ContentItemOverlay`, `mapGeometry`, and the operation/connection types — under the host export path defined by SIFR-I-0001's iframe/host export split (SIFR-T-0004). Then write an integration test that drives `useStardustHost` against a mock frame-link peer emitting a known `ContentTarget[]` + `ScrollState`, asserting mapped targets and that a simulated drop emits the expected `InsertOp`. This is mechanical wiring following the SIFR-I-0002 test pattern; full two-frame behavior is validated separately in SIFR-I-0004.
+
+## Acceptance Criteria
+
+## Acceptance Criteria
 
 ## Acceptance Criteria
 
@@ -66,6 +70,10 @@ The mock peer must faithfully emit the SIFR-I-0001 message keys and payload shap
 
 Recommended Agent: sonnet + medium
 
-## Status Updates
+## Completion notes
 
-*To be added during implementation*
+The host entry (`src/host.ts`, the package's `./host` subpath) re-exports the full public host API: `useStardustHost`, `TargetAreaOverlay`, `ContentItemOverlay`, `mapGeometry`, `MappedGeometry`, `MappedTarget`, `MappedChild`, `opFromDataTransfer`, `dispatchOp`, `DATA_TRANSFER_KEYS`, `InsertOp`, `MoveOp`, `SelectOp`, `StardustHostOp`, `ConnectionState`, `ContentLocation`, `OperationCallbacks`, `DropContext`, `DataTransferLike`, plus overlay/hook option/result types — and the framework-agnostic protocol via `export *`. No iframe-side symbols are re-exported (verified: the only "iframe" occurrence in `host.ts` is the invariant comment, no import); the host/iframe split is preserved.
+
+Added `src/host/__tests__/integration.test.tsx` (jsdom), importing through the public `../../host.js` barrel and following the mock-peer pattern (`__tests__/mockPeer.tsx`). It stands up a mock frame-link peer that responds to `cms/requestTargetPositions` with a 2-target `ContentTarget[]` fixture and emits `cms/sendScrollPositions` with a known `ScrollState`, renders a host component using `useStardustHost` + `TargetAreaOverlay`, and asserts: TC-001 overlays render at `mapGeometry`-computed coordinates and `connectionState` reaches connected; TC-002 a simulated drop emits `onInsert('hero', 0, { type: 'text' })` exactly once; and teardown removes both message subscriptions and destroys the frame-link instance on unmount.
+
+Full suite: `tsc --noEmit` clean; `vitest run` 48 tests across 6 files green (mapGeometry 10, operations 7, protocol serializability 14, overlays 9, integration 3, hook 5).

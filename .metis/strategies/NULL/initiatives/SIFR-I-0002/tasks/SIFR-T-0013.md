@@ -4,14 +4,14 @@ level: task
 title: "Implement StardustAdapterProvider with one-time registration and frame-link subscriptions"
 short_code: "SIFR-T-0013"
 created_at: 2026-07-30T16:02:18.544542+00:00
-updated_at: 2026-07-30T16:02:18.544542+00:00
+updated_at: 2026-07-30T16:40:37.462015+00:00
 parent: SIFR-I-0002
 blocked_by: []
 archived: false
 
 tags:
   - "#task"
-  - "#phase/todo"
+  - "#phase/completed"
 
 
 exit_criteria_met: false
@@ -28,6 +28,10 @@ initiative_id: SIFR-I-0002
 ## Objective **[REQUIRED]**
 
 Implement `StardustAdapterProvider`, the cleaned successor to the prototype `code_temp/Stardust-CMS-App/demoApp/src/lib/CmsBase.context.tsx`. The provider consumes `frame-link-react`'s `FrameLinkContext` (register/subscribe/post), registers the frame-link target **exactly once** when transport is `ready && !connected` (fixing the prototype's effect that re-registers on `connected` changes), subscribes to `cms/requestTargetPositions` (responding via `discoverTargets` from SIFR-T-0006) and to `cms/sendElements` (updating rendered content), and provides content down to `EditableTarget`. This task owns the effect/registration/subscription logic; the observer bundle and throttling live in SIFR-T-0008.
+
+## Acceptance Criteria
+
+## Acceptance Criteria
 
 ## Acceptance Criteria **[REQUIRED]**
 
@@ -73,4 +77,20 @@ Fixing the re-registration effect changes connection timing; cover `ready`/`conn
 
 ## Status Updates **[REQUIRED]**
 
-*To be added during implementation*
+## Completion notes
+
+Implemented `src/iframe/StardustAdapterProvider.tsx`. The real `frame-link-react`
+API has no `registerTarget`/`ready`; registration = calling
+`useConnection().connect(target)`. A `useRef` guard fires that exactly once when
+`!connected && !connecting`, so later `connected` transitions never re-register
+(REQ-001). Handlers use registry-bound wrappers (`useStardustHandler`, keys via
+`CHANNELS`, never raw literals): `cms/requestTargetPositions` responds with
+`discoverTargets(root)`, `cms/sendElements` folds each payload via `mergeContent`
+into a per-target content map exposed through `StardustContentContext` for
+`EditableTarget`. Depends only on react + frame-link-react + protocol (NFR-003);
+`useHandler` auto-unsubscribes on unmount. Added `src/iframe/testing/mock-peer.tsx`
+(in-memory peer injected through the real `FrameLinkContext`) and 4 tests
+(one-time registration across ready→connected, request/response, sendElements,
+teardown). Aligned the react toolchain to v18 to match the peer packages' own
+@types/react and avoid a dual-React-types conflict; added tsconfig `paths` for
+the peer sources and vitest `dedupe`/alias.

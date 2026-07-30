@@ -4,14 +4,14 @@ level: task
 title: "useStardustHost Hook: Frame-Link Host Connection, Position Request/Stream, Scale And Scroll Tracking"
 short_code: "SIFR-T-0018"
 created_at: 2026-07-30T16:03:38.666182+00:00
-updated_at: 2026-07-30T16:03:38.666182+00:00
+updated_at: 2026-07-30T16:43:29.887569+00:00
 parent: SIFR-I-0003
 blocked_by: []
 archived: false
 
 tags:
   - "#task"
-  - "#phase/todo"
+  - "#phase/completed"
 
 
 exit_criteria_met: false
@@ -28,6 +28,10 @@ initiative_id: SIFR-I-0003
 ## Objective
 
 Implement the `useStardustHost(iframeRef, options)` React hook — the host-side entry point that owns the frame-link connection to the iframe, requests target positions, subscribes to streamed position/scroll updates, tracks iframe scale, and returns mapped targets in host coordinates. This hook is the successor to the prototype's `code_temp/Stardust-CMS-APP-Original-backup/client/builder/src/cms_targets/useCMSTarget.tsx` (which holds `targetPositions`, listens for `cms_positions`, requests `get_cms_positions`) and the scale/scroll math ownership of `code_temp/Stardust-CMS-App/app/useFrame.tsx` — but decoupled from Stardust's `UIContext`/`ContentContext`/`PagesContext` (NFR-002). It satisfies REQ-001, REQ-002, and REQ-006 and delegates all coordinate math to `mapGeometry` (SIFR-T-0014).
+
+## Acceptance Criteria
+
+## Acceptance Criteria
 
 ## Acceptance Criteria
 
@@ -68,6 +72,12 @@ Mid-scroll resize and fractional scale must not desync the `scale` and `scrollOf
 
 Recommended Agent: opus + medium
 
-## Status Updates
+## Completion notes
 
-*To be added during implementation*
+Implemented `src/host/useStardustHost.ts`. Signature `useStardustHost(iframeRef, { origin, headerOffset?, onInsert?, onMove?, onSelect? })` returning `{ targets: MappedTarget[], scale, connectionState }`. Rejects `origin === "*"`. Uses frame-link-react `useConnection`/`useSend`/`useHandler` (consumer wraps in `FrameLinkProvider` with matching `targetOrigin`). On connect: `connect(contentWindow)` then `send('cms/requestTargetPositions')`; subscribes to `cms/sendElementPositions` (raw targets) and `cms/sendScrollPositions` (`h`→scrollX, `y`+headerOffset→scrollY). Scale computed from container/iframe widths via `ResizeObserver`. Mapped targets derived in a single `useMemo` pass over a consistent `{scale, scrollOffset}` snapshot using `mapGeometry`. Scroll commits rAF-coalesced (microtask fallback) for NFR-003. Teardown via provider `destroy` + observer disconnect. No Stardust legacy contexts. The prototype `-40` offset is surfaced as the explicit `headerOffset` option, not baked in.
+
+Added `src/host/registry.ts` (`StardustFrameLinkRegistry` mapping protocol `request`→frame-link `payload`) and `src/host/__tests__/mockPeer.tsx` (controllable mock frame-link peer). Exposed `useStardustHost`, `UseStardustHostOptions`, `UseStardustHostResult`, `MappedTarget`, `MappedChild` from `src/host.ts`.
+
+5 tests (jsdom) in `useStardustHost.test.tsx`: TC-001 map-on-connect + connected state; TC-002 coalesced 10x scroll → final offset; wildcard-origin throw; dual-key subscription + unmount teardown; streamed element-position update. All green (36 total). `tsc --noEmit` clean.
+
+Test-infra note: built the `frame-link`/`frame-link-react` peer dists and deduped their nested `react`/`react-dom`/`@types/react`; `vitest.config.ts` aliases `react`, `react-dom`, and `frame-link` to this package's single copy so the symlinked peer shares one React instance and `vi.mock('frame-link')` intercepts the same module the provider imports.

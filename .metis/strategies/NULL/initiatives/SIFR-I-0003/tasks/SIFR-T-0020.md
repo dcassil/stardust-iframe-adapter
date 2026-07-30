@@ -4,14 +4,14 @@ level: task
 title: "Structured Operation Types, dataTransfer-To-Op Construction, And Connection-State Exposure"
 short_code: "SIFR-T-0020"
 created_at: 2026-07-30T16:03:43.105404+00:00
-updated_at: 2026-07-30T16:03:43.105404+00:00
+updated_at: 2026-07-30T16:34:50.455661+00:00
 parent: SIFR-I-0003
 blocked_by: []
 archived: false
 
 tags:
   - "#task"
-  - "#phase/todo"
+  - "#phase/completed"
 
 
 exit_criteria_met: false
@@ -28,6 +28,10 @@ initiative_id: SIFR-I-0003
 ## Objective
 
 Define the structured edit-operation vocabulary (`InsertOp`/`MoveOp`/`SelectOp`) that the host emits via callbacks instead of mutating a content store, implement the pure constructor that builds these ops from a drop's `DataTransfer`, and define the `connectionState` type the hook exposes. This replaces `useCMSTarget.tsx`'s direct `addContent`/`moveContent` calls (REQ-005, NFR-002) and provides the successor to the prototype's `ConnectStatus`. The op vocabulary must align with SVER's operation vocabulary so no adapter glue is needed downstream. This task is small and its design is settled once the overlays (SIFR-T-0019) exist.
+
+## Acceptance Criteria
+
+## Acceptance Criteria
 
 ## Acceptance Criteria
 
@@ -66,6 +70,8 @@ SVER-vocabulary mismatch forces adapter glue — mitigate by cross-referencing S
 
 Recommended Agent: opus + low
 
-## Status Updates
+## Completion notes
 
-*To be added during implementation*
+Implemented `src/host/operations.ts` (framework-agnostic, no React/DOM mutation). Exported `InsertOp`/`MoveOp`/`SelectOp`/`StardustHostOp`, `ContentLocation`, `ConnectionState` (`'disconnected'|'connecting'|'connected'|'error'`), `DATA_TRANSFER_KEYS`, and pure `opFromDataTransfer(dataTransfer, {targetId,index})`. Move-vs-insert is decided by presence of a `contentId` on the transfer; empty/malformed/null transfer returns `null` (never throws); malformed numeric source index falls back to 0. Documented SVER vocabulary alignment inline (discriminated `kind` union; insert `{targetId,index,payload:{type,...}}`; move `from/to` `ContentLocation`; select `{targetId,contentId?}`). 7 unit tests cover TC-001, TC-002, move-precedence, source-target fallback, empty, null/undefined, malformed index. Built ahead of 0018/0019 (both import it) for correct dependency order. `tsc --noEmit` clean; `vitest run` green (31 tests).
+
+Note on ordering: implemented before SIFR-T-0018/0019 because both import these types/constructor; this is dependency-correct even though the initiative lists 0020 after them.
