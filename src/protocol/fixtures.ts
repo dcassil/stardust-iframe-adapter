@@ -82,6 +82,9 @@ export const contentPayloadFixture: ContentPayload = {
 
 export const styleUpdatePayloadFixture: StyleUpdatePayload = {
   styleGroup: "group-a",
+  type: "text",
+  property: "color",
+  value: "#111",
   declarations: { color: "#111", "font-size": "16px" },
 };
 
