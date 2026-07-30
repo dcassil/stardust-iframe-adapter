@@ -25,7 +25,8 @@ Never act on, monitor, or stop any agent NOT listed here — it may belong to an
 
 **Env facts:** prototype at `code_temp/Stardust-CMS-App` + `Stardust-CMS-APP-Original-backup`; transport at `code_temp/frame-link`, `code_temp/frame-link-react`; review docs `code_temp/stardust-package-extraction-review.md`, `code_temp/stardust-metis-project-initialization-plan.md`. Node 20, npm+pnpm. Git repo initialized at project root on `main`. ALL metis calls use project_path ending in `.metis`.
 
-**Wave plan (deps):** W1: 0001 (solo, foundational) → W2: 0002+0003 (parallel worktrees, disjoint dirs) → W3: 0005 → W4: 0004 (demo) → W5: 0006 (presence).
+**Wave plan (deps, REVISED):** W1: 0001 (solo) ✅ → W2: 0002+0003 (parallel worktrees) ✅ merged to main @ c3ccfb7 (79 tests green, tsc clean, boundary intact; reconciled to React 18 + frame-link source-alias). → W3: 0004 Demo (SOLO on main; everything after extends it) → W4: 0005 Style + 0006 Presence (parallel worktrees, both extend demo, merge-resolve).
+Worktrees wt-0002/wt-0003 removed; branches feat/0002-iframe, feat/0003-host retained (merged).
 
 | Wave | Initiative | Agent ID | Branch/worktree | Status |
 | ---- | ---------- | -------- | --------------- | ------ |
@@ -33,6 +34,9 @@ Never act on, monitor, or stop any agent NOT listed here — it may belong to an
 | W2 | SIFR-I-0002 Iframe (T-0006,0013,0015,0016,0017) | af66800c31822125a | feat/0002-iframe @ ../wt-0002-iframe | DONE ✅ 45 tests, tsc clean. MODIFIED src/protocol/index.ts (ContentPayload now {content: CmsContent}, added ContentKind/CmsContent) + fixtures. Config: React 18, added types/frame-link-react.d.ts + tsconfig paths. |
 
 **MERGE/INTEGRATION (W2 → main):** conflicts expected — (a) protocol ContentPayload reshaped by 0002, consumed as old shape by 0003 → host typecheck may break; (b) React 18 (0002) vs 19 (0003) divergence in package.json/tsconfig/vitest.config; (c) two different frame-link resolution strategies. Resolve to ONE toolchain, get combined tsc clean + ALL tests green before Wave 3.
+RESOLVED 2026-07-30 11:55 by orchestrator: React 18 chosen; vitest aliases frame-link/-react to sibling TS source + dedupe react/dom; global jsdom env. Regenerated lockfile. Result: tsc clean, 79 tests pass (13 files), build emits split dist with no cross-imports. Merge commit c3ccfb7.
+
+| W3 | SIFR-I-0004 Demo (T-0007..0012) | a555a3d38ff7a357f | main | RUNNING |
 | W2 | SIFR-I-0003 Host (T-0014,0018,0019,0020,0021) | ae68912977b103fb0 | feat/0003-host @ ../wt-0003-host | DONE ✅ 48 tests, tsc clean. NOTE: modified shared tsconfig.json/vitest.config.ts/package.json devDeps (React test infra) + built code_temp/frame-link dist. Expect config merge conflicts vs 0002. |
 
 ---

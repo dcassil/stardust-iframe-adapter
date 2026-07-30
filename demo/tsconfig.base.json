@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "types": ["vite/client", "node"],
+    "baseUrl": ".",
+    "paths": {
+      "@stardust-cms/iframe-adapter/host": ["../src/host.ts"],
+      "@stardust-cms/iframe-adapter/protocol": ["../src/protocol.ts"],
+      "@stardust-cms/iframe-adapter/iframe": ["../src/iframe.ts"],
+      "@stardust-cms/iframe-adapter": ["../src/iframe.ts"],
+      "@demo/shared/content-model": ["shared/src/content-model.ts"],
+      "frame-link-react": ["../../../frame-link-react/dist/index.d.ts"],
+      "frame-link": ["../../../frame-link/dist/index.d.ts"]
+    }
+  }
+}
