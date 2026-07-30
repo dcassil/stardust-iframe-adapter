@@ -38,9 +38,11 @@ export const demoAliases: Record<string, string> = {
   "@demo/shared/store": fileURLToPath(
     new URL("./src/store/index.ts", import.meta.url),
   ),
-  // frame-link peers from sibling prebuilt dist (they ship dist js + d.ts).
-  "frame-link-react": sibling("frame-link-react/dist/index.js"),
-  "frame-link": sibling("frame-link/dist/index.js"),
+  // frame-link peers from sibling source entry points (frame-link-react ships
+  // no `dist`); Vite transforms the TS directly. Mirrors the library's own
+  // vitest config; dedupe (below) keeps a single React instance across the tree.
+  "frame-link-react": sibling("frame-link-react/src/index.ts"),
+  "frame-link": sibling("frame-link/src/index.ts"),
 };
 
 export const demoDedupe: string[] = ["react", "react-dom"];
