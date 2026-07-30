@@ -100,6 +100,7 @@ export function discoverTargets(
   options: DiscoverTargetsOptions = {}
 ): ContentTarget[] {
   const containerInset = options.containerInset ?? CONTAINER_INSET;
+  const scroll = resolveScrollOffset(root);
 
   const targets = Array.from(
     root.querySelectorAll<HTMLElement>(`[${ATTR_TARGET}]`)
@@ -115,12 +116,50 @@ export function discoverTargets(
       // attribute read is non-null.
       targetId: target.getAttribute(ATTR_TARGET) ?? "",
       isContainer: isTargetContainer(target),
-      geometry: toGeometry(target.getBoundingClientRect()),
+      geometry: toAbsoluteGeometry(target.getBoundingClientRect(), scroll),
       children: contents.map((content, index) =>
-        toChildContent(content, index, containerInset)
+        toChildContent(content, index, containerInset, scroll)
       ),
     };
   });
+}
+
+/** The document scroll offset (`scrollX`/`scrollY`) of a discovery root. */
+interface ScrollOffset {
+  x: number;
+  y: number;
+}
+
+/**
+ * Resolve the scroll offset of the window that owns `root`. Discovery reports
+ * geometry in **document-absolute** coordinates (viewport rect + scroll offset)
+ * so that a scroll neither moves the reported rectangles nor requires the host
+ * to re-request positions: the host's single scroll-projection step
+ * (`mapGeometry`) is the *only* place scroll is applied. Reporting raw
+ * viewport-relative rects here would double-count scroll against that host step.
+ *
+ * Falls back to `{0, 0}` in non-DOM environments (e.g. jsdom without a layout /
+ * scroll, where `scrollX`/`scrollY` are `0` anyway).
+ */
+function resolveScrollOffset(root: Document | HTMLElement): ScrollOffset {
+  const doc = "ownerDocument" in root ? root.ownerDocument : root;
+  const win = doc?.defaultView ?? (typeof window !== "undefined" ? window : null);
+  if (!win) {
+    return { x: 0, y: 0 };
+  }
+  return { x: win.scrollX, y: win.scrollY };
+}
+
+/** Copy a rect into absolute {@link Geometry} by adding the scroll offset. */
+function toAbsoluteGeometry(rect: DOMRect, scroll: ScrollOffset): Geometry {
+  const g = toGeometry(rect);
+  g.top += scroll.y;
+  g.bottom += scroll.y;
+  g.y += scroll.y;
+  g.left += scroll.x;
+  g.right += scroll.x;
+  g.x += scroll.x;
+  return g;
 }
 
 /**
@@ -152,10 +191,11 @@ function isChildContainer(element: HTMLElement): boolean {
 function toChildContent(
   content: HTMLElement,
   index: number,
-  containerInset: number
+  containerInset: number,
+  scroll: ScrollOffset
 ): ChildContent {
   const childIsContainer = isChildContainer(content);
-  const geometry = toGeometry(content.getBoundingClientRect());
+  const geometry = toAbsoluteGeometry(content.getBoundingClientRect(), scroll);
 
   if (childIsContainer) {
     geometry.top = geometry.top - containerInset;

@@ -5,5 +5,7 @@ dist/
 metis.db
 .metis/metis.db
 .playwright-mcp/
+test-results/
+playwright-report/
 demo/e2e/test-results/
 demo/e2e/playwright-report/
