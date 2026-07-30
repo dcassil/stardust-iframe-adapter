@@ -4,14 +4,14 @@ level: task
 title: "One-Command Demo Startup And README Screenshots And Capture Instructions"
 short_code: "SIFR-T-0012"
 created_at: 2026-07-30T16:02:18.244740+00:00
-updated_at: 2026-07-30T17:47:41.613605+00:00
+updated_at: 2026-07-30T17:51:49.782481+00:00
 parent: SIFR-I-0004
 blocked_by: []
 archived: false
 
 tags:
   - "#task"
-  - "#phase/active"
+  - "#phase/completed"
 
 
 exit_criteria_met: false
@@ -28,6 +28,8 @@ initiative_id: SIFR-I-0004
 ## Objective **[REQUIRED]**
 
 Provide the single documented command that starts both apps (e.g. `npm run demo`) and write the README section that turns the running demo into the portfolio artifact: screenshots plus short GIF/video capture instructions. This is the packaging that satisfies REQ-007 and the vision's five-minute time-to-understanding criterion (NFR-001) — a reviewer clones, runs one command, and sees the value.
+
+## Acceptance Criteria
 
 ## Acceptance Criteria
 
