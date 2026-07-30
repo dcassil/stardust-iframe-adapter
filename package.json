@@ -1,10 +1,21 @@
 {
   "name": "@stardust-cms/iframe-adapter",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Typed, framework-agnostic protocol plus iframe/host adapters for building in-iframe visual editors, transported over frame-link.",
   "type": "module",
   "license": "MIT",
   "author": "Daniel Cassil",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dcassil/stardust-iframe-adapter.git"
+  },
+  "homepage": "https://github.com/dcassil/stardust-iframe-adapter#readme",
+  "bugs": {
+    "url": "https://github.com/dcassil/stardust-iframe-adapter/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "sideEffects": false,
   "keywords": [
     "iframe",
@@ -39,7 +50,8 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
@@ -56,8 +68,8 @@
     "demo:e2e:presence": "playwright test -c demo/e2e/presence.config.ts"
   },
   "peerDependencies": {
-    "frame-link": "^3.0.0",
-    "frame-link-react": "^3.0.0",
+    "frame-link": "^4.0.0",
+    "frame-link-react": "^4.0.0",
     "react": ">=18"
   },
   "devDependencies": {
