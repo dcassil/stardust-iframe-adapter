@@ -161,14 +161,28 @@ export interface ContentPayload {
 /* -------------------------------------------------------------------------- */
 
 /**
- * Reserved payload for `cms/updateStyles` (host → iframe). Owned by SIFR-I-0005.
- * Declared now so the registry is stable; the final schema is defined there.
+ * Payload for `cms/updateStyles` (host → iframe). Owned by SIFR-I-0005.
+ *
+ * A single style value: set one CSS `property` on a `styleGroup`, scoped by the
+ * group's element `type` (which selects the allowlist bucket on the iframe
+ * side). The iframe adapter accumulates these and re-runs `generateCss` →
+ * `injectStyles` per message. Kept flat + serializable (NFR-001).
+ *
+ * `declarations` is retained as an optional batch form (property → value) for
+ * forward-compatibility; when present it is applied under the same `styleGroup`
+ * and `type`. At least one of `property`/`declarations` should be provided.
  */
 export interface StyleUpdatePayload {
   /** The `data-style-group` this update targets. */
   styleGroup: string;
-  /** Serializable declaration bag (property -> value). Finalized in SIFR-I-0005. */
-  declarations: Record<string, string>;
+  /** Element type selecting the allowlist bucket (e.g. `text`, `container`). */
+  type: string;
+  /** The single CSS property to set (e.g. `color`). */
+  property?: string;
+  /** The candidate value for `property`; validated iframe-side before emission. */
+  value?: string;
+  /** Optional batch form: property → value, applied under `styleGroup`/`type`. */
+  declarations?: Record<string, string>;
 }
 
 /**

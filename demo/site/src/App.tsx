@@ -20,15 +20,32 @@
 
 import type { ReactNode } from "react";
 import { FrameLinkProvider } from "frame-link-react";
-import { StardustAdapterProvider } from "@stardust-cms/iframe-adapter";
+import {
+  StardustAdapterProvider,
+  StyleFeature,
+} from "@stardust-cms/iframe-adapter";
 import { SeedContent } from "./SeedContent";
 import { Page } from "./Page";
 import { FRAME_LINK_OPTIONS } from "./config";
+
+/**
+ * The style feature (SIFR-I-0005) is OPT-IN. The demo enables it by default and
+ * lets an `?styles=off` query param disable it, so the E2E harness can exercise
+ * both the enabled path (live style updates) and the zero-footprint disabled
+ * path (no subscription, no adapter `<style>` node) from one build.
+ */
+function styleFeatureEnabled(): boolean {
+  if (typeof window === "undefined") return true;
+  return !new URLSearchParams(window.location.search).has("stylesOff");
+}
 
 export function App(): ReactNode {
   return (
     <FrameLinkProvider options={FRAME_LINK_OPTIONS}>
       <StardustAdapterProvider>
+        {/* Opt-in style feature: subscribes to cms/updateStyles only when
+            enabled; renders nothing and leaves zero footprint when disabled. */}
+        <StyleFeature enabled={styleFeatureEnabled()} important />
         <SeedContent>
           <Page />
         </SeedContent>

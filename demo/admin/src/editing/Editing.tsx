@@ -32,6 +32,7 @@ import type { StoreOperation, ContentSnapshot } from "@demo/shared/store";
 import { Overlays } from "./Overlays";
 import { Palette } from "./Palette";
 import { SidePanel } from "./SidePanel";
+import { StylePanel } from "./StylePanel";
 import { StoreBridge } from "./StoreBridge";
 import { EditingContext, type EditingContextValue } from "./editing-context";
 
@@ -140,12 +141,17 @@ export function Editing({ render }: EditingProps): ReactNode {
 
   const palette = <Palette />;
   const panel = (
-    <SidePanel
-      snapshot={snapshot}
-      selectedTargetId={selectedTargetId}
-      selectedContentId={selectedContentId}
-      onEdit={onEdit}
-    />
+    <>
+      <SidePanel
+        snapshot={snapshot}
+        selectedTargetId={selectedTargetId}
+        selectedContentId={selectedContentId}
+        onEdit={onEdit}
+      />
+      {/* SIFR-T-0029 opt-in style panel: emits cms/updateStyles for the
+          selected block's group. */}
+      <StylePanel snapshot={snapshot} />
+    </>
   );
 
   return (

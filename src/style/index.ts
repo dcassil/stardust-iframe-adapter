@@ -39,3 +39,9 @@ export {
   discoverStyleElements,
   type DiscoveredStyleGroup,
 } from "./injector.js";
+
+export {
+  useStyleFeature,
+  type UseStyleFeatureOptions,
+} from "./useStyleFeature.js";
+export { StyleFeature, type StyleFeatureProps } from "./StyleFeature.js";

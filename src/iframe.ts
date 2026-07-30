@@ -87,6 +87,10 @@ export {
   clearStyles,
   discoverStyleElements,
   type DiscoveredStyleGroup,
+  useStyleFeature,
+  type UseStyleFeatureOptions,
+  StyleFeature,
+  type StyleFeatureProps,
 } from "./style/index.js";
 
 export {
