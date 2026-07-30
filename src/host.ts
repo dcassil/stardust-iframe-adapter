@@ -11,5 +11,6 @@
  */
 export * from "./protocol/index.js";
 
-// SIFR-I-0003 will add the host-side hook/overlay exports here, e.g.:
-//   export { useStardustHost } from "./host/useStardustHost.js";
+// SIFR-I-0003 — host-side overlay adapter surface.
+export { mapGeometry } from "./host/mapGeometry.js";
+export type { GeometryTransform, MappedGeometry } from "./host/mapGeometry.js";
