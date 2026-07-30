@@ -15,6 +15,14 @@ export * from "./protocol/index.js";
 export { mapGeometry } from "./host/mapGeometry.js";
 export type { GeometryTransform, MappedGeometry } from "./host/mapGeometry.js";
 
+export { useStardustHost } from "./host/useStardustHost.js";
+export type {
+  UseStardustHostOptions,
+  UseStardustHostResult,
+  MappedTarget,
+  MappedChild,
+} from "./host/useStardustHost.js";
+
 export { opFromDataTransfer, DATA_TRANSFER_KEYS } from "./host/operations.js";
 export type {
   InsertOp,
