@@ -58,6 +58,29 @@ export {
   type ContentRendererProps,
 } from "./iframe/ContentRenderer.js";
 export { StyleElement, type StyleElementProps } from "./iframe/StyleElement.js";
+/* -------------------------------------------------------------------------- */
+/* Opt-in style engine (SIFR-I-0005)                                          */
+/* -------------------------------------------------------------------------- */
+
+// Framework-agnostic allowlist + validators (SIFR-T-0026). Opt-in: not wired
+// into the provider — consumers import and enable the style feature explicitly.
+export {
+  DEFAULT_ALLOWLIST,
+  VALIDATORS,
+  isAllowed,
+  validateValue,
+  validateColor,
+  validatePx,
+  validateFontWeight,
+  validateTextAlign,
+  validateDisplay,
+  type CssProperty,
+  type StyleElementType,
+  type StyleAllowlist,
+  type ValidatedValue,
+  type ValueValidator,
+} from "./style/index.js";
+
 export {
   ATTR_TARGET,
   ATTR_CONTENT,
