@@ -4,14 +4,14 @@ level: task
 title: "Structured-Clone Serializability Round-Trip Tests Over Sample Payloads"
 short_code: "SIFR-T-0003"
 created_at: 2026-07-30T16:01:21.123510+00:00
-updated_at: 2026-07-30T16:01:21.123510+00:00
+updated_at: 2026-07-30T16:19:14.681398+00:00
 parent: SIFR-I-0001
 blocked_by: []
 archived: false
 
 tags:
   - "#task"
-  - "#phase/todo"
+  - "#phase/active"
 
 
 exit_criteria_met: false
@@ -28,6 +28,8 @@ initiative_id: SIFR-I-0001
 ## Objective **[REQUIRED]**
 
 Prove NFR-001 (serializability) for the protocol module by adding a focused test file that runs each sample payload type through a structured-clone round-trip and asserts deep equality. This guarantees every geometry, scroll, content-target, and message payload survives `postMessage` transport (which uses the structured clone algorithm) with no DOM nodes, functions, or class instances leaking in. It is the runtime companion to SIFR-T-0002's compile-time type assertions.
+
+## Acceptance Criteria
 
 ## Acceptance Criteria **[REQUIRED]**
 

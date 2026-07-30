@@ -4,14 +4,14 @@ level: task
 title: "Define Framework-Agnostic Protocol Module: MessageRegistry, Geometry, ScrollState, ContentTarget, ChildContent"
 short_code: "SIFR-T-0002"
 created_at: 2026-07-30T16:01:19.133595+00:00
-updated_at: 2026-07-30T16:16:42.883539+00:00
+updated_at: 2026-07-30T16:19:07.744658+00:00
 parent: SIFR-I-0001
 blocked_by: []
 archived: false
 
 tags:
   - "#task"
-  - "#phase/active"
+  - "#phase/completed"
 
 
 exit_criteria_met: false
@@ -28,6 +28,8 @@ initiative_id: SIFR-I-0001
 ## Objective **[REQUIRED]**
 
 Define the framework-agnostic `protocol` module that is the core substrate every downstream SIFR initiative and the SVER project consume. This module contains only types and one registry object — zero React and zero DOM runtime dependencies — so it can be imported by non-React and server-side consumers. It codifies: the `MessageRegistry` (every host↔iframe message keyed and typed), the serializable `Geometry`/`ScrollState` types (replacing raw `DOMRect`), and the `ContentTarget`/`ChildContent` metadata types. Wrong choices here compound across SIFR-I-0002, SIFR-I-0003, SIFR-I-0005, and SVER, so this is the highest-stakes task in the initiative.
+
+## Acceptance Criteria
 
 ## Acceptance Criteria
 
@@ -58,4 +60,13 @@ Recommended Agent: opus + high
 
 ## Status Updates **[REQUIRED]**
 
-*To be added during implementation*
+### Completion notes
+Built the framework-agnostic protocol module and package skeleton.
+Files: `src/protocol/index.ts` (types + `StardustMessageRegistry` + `MESSAGE_KEYS` runtime marker), `src/protocol/type-assertions.ts` (compile-time assertions incl. a `@ts-expect-error` proving a wrong payload shape is rejected), `package.json`, `tsconfig.json` (strict, NodeNext ESM, noEmit), `vitest.config.ts`.
+- `Geometry`/`SerializableRect` = exactly `{top,right,bottom,left,width,height,x,y}` all number; no `DOMRect` referenced.
+- `ScrollState` = `{h,y,isTop,isBottom}`.
+- `ContentTarget{targetId,isContainer,geometry,children}` + `ChildContent{contentId,index,isContainer,styleGroup,geometry}`.
+- Registry keys: `cms/requestTargetPositions`, `cms/sendElements`, `cms/sendElementPositions`, `cms/sendScrollPositions`, `cms/updateStyles`, and reserved `cms/presence`.
+- Registry uses `MessageDefinition<request,response>` structurally compatible with frame-link's `MessageDefinition<payload,response>` (request === payload).
+- No `react` import anywhere in the module (NFR-004); all payloads structured-clone-safe (NFR-001).
+Verification: `npx tsc --noEmit` passes clean (TSC_CLEAN).
