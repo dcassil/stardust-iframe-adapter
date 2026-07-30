@@ -11,19 +11,10 @@
     "noImplicitOverride": true,
     "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true,
-    "baseUrl": ".",
-    "paths": {
-      // The `frame-link` peer is symlinked from a sibling repo and ships a built
-      // `dist` with type declarations; point the type-checker at those. (Its
-      // node_modules symlink resolves to the wrong depth in this worktree, so an
-      // explicit mapping to the real dist types is required.) `frame-link-react`
-      // ships no dist and is typed by `types/frame-link-react.d.ts`.
-      "frame-link": ["../../frame-link/dist/index.d.ts"]
-    },
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "types": ["node"],
     "noEmit": true
   },
-  "include": ["src", "types"]
+  "include": ["src"]
 }

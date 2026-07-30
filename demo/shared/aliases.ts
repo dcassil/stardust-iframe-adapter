@@ -6,10 +6,9 @@
  * the library needed while iterating on the demo. The `/host`, `/protocol`, and
  * root (`/iframe`) subpaths map to the library's barrel entry files.
  *
- * The frame-link peers are symlinked into the repo's node_modules from sibling
- * source repos that ship no `dist`; alias them to their source entry points and
- * dedupe React so the whole tree shares one React instance (mirrors the
- * library's own vitest config).
+ * The frame-link peers resolve normally from node_modules (published npm
+ * packages); we only dedupe React (below) so the whole tree shares one React
+ * instance.
  */
 
 import { fileURLToPath } from "node:url";
@@ -17,11 +16,6 @@ import { fileURLToPath } from "node:url";
 /** repo root = two levels up from demo/shared. */
 function repo(rel: string): string {
   return fileURLToPath(new URL(`../../${rel}`, import.meta.url));
-}
-
-/** sibling peer repos live three levels up from demo/shared. */
-function sibling(rel: string): string {
-  return fileURLToPath(new URL(`../../../../${rel}`, import.meta.url));
 }
 
 export const demoAliases: Record<string, string> = {
@@ -38,11 +32,6 @@ export const demoAliases: Record<string, string> = {
   "@demo/shared/store": fileURLToPath(
     new URL("./src/store/index.ts", import.meta.url),
   ),
-  // frame-link peers from sibling source entry points (frame-link-react ships
-  // no `dist`); Vite transforms the TS directly. Mirrors the library's own
-  // vitest config; dedupe (below) keeps a single React instance across the tree.
-  "frame-link-react": sibling("frame-link-react/src/index.ts"),
-  "frame-link": sibling("frame-link/src/index.ts"),
 };
 
 export const demoDedupe: string[] = ["react", "react-dom"];
