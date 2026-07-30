@@ -27,6 +27,7 @@ function sibling(rel: string): string {
 export const demoAliases: Record<string, string> = {
   // Library subpaths (order matters: more specific first).
   "@stardust-cms/iframe-adapter/host": repo("src/host.ts"),
+  "@stardust-cms/iframe-adapter/presence": repo("src/presence.ts"),
   "@stardust-cms/iframe-adapter/protocol": repo("src/protocol.ts"),
   "@stardust-cms/iframe-adapter/iframe": repo("src/iframe.ts"),
   "@stardust-cms/iframe-adapter": repo("src/iframe.ts"),

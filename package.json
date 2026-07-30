@@ -52,7 +52,8 @@
     "demo:typecheck": "tsc -p demo/site/tsconfig.json && tsc -p demo/admin/tsconfig.json && tsc -p demo/presence-server/tsconfig.json",
     "demo:presence-server": "tsx demo/presence-server/index.ts",
     "demo:build": "vite build --config demo/site/vite.config.ts demo/site && vite build --config demo/admin/vite.config.ts demo/admin",
-    "demo:e2e": "playwright test -c demo/e2e/playwright.config.ts"
+    "demo:e2e": "playwright test -c demo/e2e/playwright.config.ts",
+    "demo:e2e:presence": "playwright test -c demo/e2e/presence.config.ts"
   },
   "peerDependencies": {
     "frame-link": "^3.0.0",
