@@ -22,3 +22,20 @@ export {
   toGeometry,
   type DiscoverTargetsOptions,
 } from "./iframe/discovery.js";
+
+// Provider + content context (SIFR-T-0013).
+export {
+  StardustAdapterProvider,
+  type StardustAdapterProviderProps,
+} from "./iframe/StardustAdapterProvider.js";
+export {
+  StardustContentContext,
+  mergeContent,
+  type ContentByTarget,
+  type StardustContentContextValue,
+} from "./iframe/content-context.js";
+export {
+  CHANNELS,
+  useStardustHandler,
+  useStardustSend,
+} from "./iframe/frameLink.js";

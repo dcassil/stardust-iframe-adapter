@@ -21,10 +21,16 @@ export default defineConfig({
       "frame-link-react": frameLinkReactSrc,
       "frame-link": frameLinkSrc,
     },
+    // The aliased peer sources live in sibling repos that carry their own
+    // (React 18) node_modules. Without deduping, Vite would load a second React
+    // copy for them, breaking context/hook identity. Force a single React from
+    // this package's node_modules.
+    dedupe: ["react", "react-dom"],
   },
   test: {
     environment: "jsdom",
     globals: false,
+    setupFiles: ["src/iframe/testing/setup.ts"],
     include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
   },
 });
