@@ -36,7 +36,21 @@ Worktrees wt-0002/wt-0003 removed; branches feat/0002-iframe, feat/0003-host ret
 **MERGE/INTEGRATION (W2 → main):** conflicts expected — (a) protocol ContentPayload reshaped by 0002, consumed as old shape by 0003 → host typecheck may break; (b) React 18 (0002) vs 19 (0003) divergence in package.json/tsconfig/vitest.config; (c) two different frame-link resolution strategies. Resolve to ONE toolchain, get combined tsc clean + ALL tests green before Wave 3.
 RESOLVED 2026-07-30 11:55 by orchestrator: React 18 chosen; vitest aliases frame-link/-react to sibling TS source + dedupe react/dom; global jsdom env. Regenerated lockfile. Result: tsc clean, 79 tests pass (13 files), build emits split dist with no cross-imports. Merge commit c3ccfb7.
 
-| W3 | SIFR-I-0004 Demo (T-0007..0012) | a555a3d38ff7a357f | main | RUNNING |
+| W3 | SIFR-I-0004 Demo (T-0007..0012) | a555a3d38ff7a357f | main | DONE ✅ 6 tasks, main@95d24f6. 79 lib tests + 19 demo + 2 e2e green. Fixed real bug: discoverTargets now reports document-absolute geometry (was double-counting scroll). Demo seams: site provider demo/site/src/App.tsx; admin sidebar demo/admin/src/editing/SidePanel.tsx; presence seam Editing.tsx/host-context.ts + admin-overlay-layer; store swap = ContentStore iface. |
+| W4 | SIFR-I-0005 Style (T-0026..0029) | a99993f6ef26aec82 | feat/0005-style @ ../wt-0005-style | DONE ✅ 127 lib tests, demo 19, e2e 3+2. Protocol: firmed StyleUpdatePayload additively (cms/updateStyles only). Demo edits: site App.tsx (1 line StyleFeature), admin Editing.tsx (import+StylePanel), new useSendStyles.ts/StylePanel.tsx/style-panel.e2e.ts. |
+| W4 | SIFR-I-0006 Presence (T-0022..0025) | afb3a610196ae4992 | feat/0006-presence @ ../wt-0006-presence | DONE ✅ 88 lib tests, demo 21, 2-tab e2e 1. Protocol NOT touched. Added ./presence export + socket.io/socket.io-client/tsx devDeps + scripts. Demo edit: Editing.tsx (PresenceLayer mount, flag VITE_PRESENCE_ENABLED off by default), new PresenceLayer.tsx/presence-config.ts/presence-server/*, aliases.ts + tsconfig.base.json. |
+Expected merge conflicts (W4→main): demo/admin/src/App.tsx sidebar + demo/site/src/App.tsx (both add UI), package.json deps (0006 adds socket.io). Protocol: 0005 edits cms/updateStyles area only, 0006 edits cms/presence area only → should be additive/non-conflicting.
+
+## ✅ PROJECT COMPLETE — 2026-07-30 ~13:25
+- W4 merged to main (style 704a27c, presence 4bc6e81) — **ZERO merge conflicts** (isolated component files + single mount-lines worked). Lockfile reconciled via reinstall.
+- FINAL VERIFICATION (main @ 4bc6e81):
+  - Library: `tsc --noEmit` clean; `vitest run` **136 tests pass** (16 files).
+  - Demo: `demo:typecheck` clean; `demo:test` **21 tests pass**.
+  - Build: emits dist/{iframe,host,presence,protocol}.js — module boundaries clean (each entry imports only its own dir; protocol pure).
+  - Earlier waves: Playwright e2e green (overlay-alignment 2, style-panel 3, presence 2-tab 1) per agent reports.
+- METIS: all 29 tasks `completed`, ADR SIFR-A-0001 `decided`, all 6 initiatives transitioned to `completed`.
+- Worktrees removed. Branches feat/0001..0006 retained (merged). Old prototype repos never modified.
+- Public repo identity: `stardust-iframe-adapter` / npm `@stardust-cms/iframe-adapter`. NOT pushed anywhere (awaiting user go-ahead).
 | W2 | SIFR-I-0003 Host (T-0014,0018,0019,0020,0021) | ae68912977b103fb0 | feat/0003-host @ ../wt-0003-host | DONE ✅ 48 tests, tsc clean. NOTE: modified shared tsconfig.json/vitest.config.ts/package.json devDeps (React test infra) + built code_temp/frame-link dist. Expect config merge conflicts vs 0002. |
 
 ---
