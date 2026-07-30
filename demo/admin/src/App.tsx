@@ -1,55 +1,124 @@
 /**
- * Demo admin (host) root.
+ * Demo admin (host) root — rebuilt on `@stardust-cms/dashboard`'s `HostShell`.
  *
- * Wires the host-side stack:
+ * The hand-rolled host stack (FrameLinkProvider + HostCanvas + Editing +
+ * StoreBridge + Overlays + useContentStore + useSendElements + Palette +
+ * SidePanel) is gone. `HostShell` now OWNS the transport, the store injection,
+ * the geometry canvas, and the ops → store → `cms/sendElements` pipeline. This
+ * file just:
  *
- *  1. `FrameLinkProvider` — owns the frame-link transport with `targetOrigin`
- *     set to the embedded site's explicit origin (never `*`, NFR-002).
- *  2. `HostCanvas` — the scaled iframe + `useStardustHost` connection + geometry
- *     plumbing, publishing everything through `HostContext`.
- *  3. `ConnectionStatus` — the lifecycle strip (connecting / connected / error).
+ *  1. constructs the VCE-backed {@link VceContentStoreAdapter} once (seeded from
+ *     the shared demo content model),
+ *  2. hands it to `HostShell` together with the demo's `text`/`image`
+ *     {@link DEMO_BLOCK_TYPES} registry and the explicit iframe origin (never `*`),
+ *  3. supplies `renderOverlayChrome` — the bundled {@link Overlays} — which also
+ *     mirrors the shell's tracked selection into local state, since the shell
+ *     hands selection only to `renderOverlayChrome` and not to the side panel, and
+ *  4. arranges the canvas beside a sidebar (palette / side panel / versioning
+ *     controls) via `renderLayout`.
  *
- * The overlay + side-panel editing layer (SIFR-T-0010) is mounted inside the
- * canvas as `children` and to the side as the panel; this shell provides the
- * connection + geometry surface it consumes via `useHost()`.
+ * The palette / side panel live in the sidebar (rendered by `renderLayout`), NOT
+ * as overlay-layer `children`, so they are not double-rendered over the canvas —
+ * `children` is intentionally omitted.
  */
 
-import type { ReactNode } from "react";
-import { FrameLinkProvider } from "frame-link-react";
-import { HostCanvas } from "./HostCanvas";
-import { ConnectionStatus } from "./ConnectionStatus";
-import { Editing } from "./editing/Editing";
-import { SITE_ORIGIN, FRAME_LINK_OPTIONS } from "./config";
+import { useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  HostShell,
+  Overlays,
+  Palette,
+  type OverlayChromeParts,
+  type HostShellLayoutParts,
+} from "@stardust-cms/dashboard";
+import { createDemoContentStore } from "@demo/shared/store";
+import { DEMO_BLOCK_TYPES } from "./blockTypes";
+import { VersionControls } from "./VersionControls";
+import { EditPanel } from "./EditPanel";
+import { HostBridgeContext, type Reinject } from "./host-bridge";
+import { SITE_ORIGIN, DESIGN_WIDTH, DESIGN_HEIGHT } from "./config";
+
+/** The admin's tracked selection, mirrored from the shell's overlay chrome. */
+interface Selection {
+  targetId: string | null;
+  contentId: string | null;
+}
 
 export function App(): ReactNode {
-  return (
-    <FrameLinkProvider options={FRAME_LINK_OPTIONS}>
-      <div className="admin-root">
-        <Editing
-          render={({ operationCallbacks, overlays, panel, palette }) => (
-            <div className="admin-layout">
-              <div className="admin-main">
-                <HostCanvas
-                  operationCallbacks={operationCallbacks}
-                  renderStatus={(state, scale) => (
-                    <ConnectionStatus
-                      state={state}
-                      scale={scale}
-                      siteOrigin={SITE_ORIGIN}
-                    />
-                  )}
-                >
-                  {overlays}
-                </HostCanvas>
-              </div>
-              <aside className="admin-sidebar">
-                {palette}
-                {panel}
-              </aside>
-            </div>
-          )}
-        />
+  // Construct the store exactly once (a fresh instance would reset the seed +
+  // version history on every render).
+  const store = useMemo(() => createDemoContentStore(), []);
+  const [selection, setSelection] = useState<Selection>({
+    targetId: null,
+    contentId: null,
+  });
+  // The shell's `onSelect` callback captured from `renderOverlayChrome` — the
+  // only place the shell exposes a dispatch path. Re-selecting an item through it
+  // triggers the shell's `cms/sendElements` re-injection, which is how side-panel
+  // field edits reach the iframe.
+  const reinjectRef = useRef<Reinject>(() => {});
+
+  const renderOverlayChrome = (parts: OverlayChromeParts): ReactNode => {
+    reinjectRef.current = parts.callbacks.onSelect ?? (() => {});
+    // Mirror the shell's tracked selection into our context so the side panel
+    // (in the sidebar) can read it. Guarded by an equality check so the
+    // render-phase setState does not loop.
+    if (
+      parts.selectedTargetId !== selection.targetId ||
+      parts.selectedContentId !== selection.contentId
+    ) {
+      setSelection({
+        targetId: parts.selectedTargetId,
+        contentId: parts.selectedContentId,
+      });
+    }
+    return (
+      <Overlays
+        targets={parts.targets}
+        callbacks={parts.callbacks}
+        selectedTargetId={parts.selectedTargetId}
+        selectedContentId={parts.selectedContentId}
+      />
+    );
+  };
+
+  // Stable bridge: delegates to whatever `onSelect` the shell most recently
+  // exposed (kept in the ref), so children get a stable function identity.
+  const reinject = useMemo<Reinject>(
+    () => (targetId, contentId) => reinjectRef.current(targetId, contentId),
+    [],
+  );
+
+  const renderLayout = ({ canvas, status }: HostShellLayoutParts): ReactNode => (
+    <HostBridgeContext.Provider value={reinject}>
+      <div className="admin-layout">
+        <div className="admin-main">
+          {status}
+          {canvas}
+        </div>
+        <aside className="admin-sidebar">
+          <Palette blockTypes={DEMO_BLOCK_TYPES} />
+          <EditPanel
+            blockTypes={DEMO_BLOCK_TYPES}
+            selectedTargetId={selection.targetId}
+            selectedContentId={selection.contentId}
+          />
+          <VersionControls />
+        </aside>
       </div>
-    </FrameLinkProvider>
+    </HostBridgeContext.Provider>
+  );
+
+  return (
+    <div className="admin-root">
+      <HostShell
+        store={store}
+        blockTypes={DEMO_BLOCK_TYPES}
+        iframeOrigin={SITE_ORIGIN}
+        designWidth={DESIGN_WIDTH}
+        designHeight={DESIGN_HEIGHT}
+        renderOverlayChrome={renderOverlayChrome}
+        renderLayout={renderLayout}
+      />
+    </div>
   );
 }

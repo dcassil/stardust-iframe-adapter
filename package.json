@@ -57,15 +57,14 @@
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "demo": "concurrently -k -n site,admin -c magenta,cyan \"npm:demo:site\" \"npm:demo:admin\"",
-    "demo:site": "vite --config demo/site/vite.config.ts demo/site",
-    "demo:admin": "vite --config demo/admin/vite.config.ts demo/admin",
-    "demo:test": "vitest run -c demo/vitest.config.ts",
-    "demo:typecheck": "tsc -p demo/site/tsconfig.json && tsc -p demo/admin/tsconfig.json && tsc -p demo/presence-server/tsconfig.json",
-    "demo:presence-server": "tsx demo/presence-server/index.ts",
-    "demo:build": "vite build --config demo/site/vite.config.ts demo/site && vite build --config demo/admin/vite.config.ts demo/admin",
-    "demo:e2e": "playwright test -c demo/e2e/playwright.config.ts",
-    "demo:e2e:presence": "playwright test -c demo/e2e/presence.config.ts"
+    "demo:install": "npm --prefix demo install",
+    "demo": "npm --prefix demo run demo",
+    "demo:site": "npm --prefix demo run demo:site",
+    "demo:admin": "npm --prefix demo run demo:admin",
+    "demo:test": "npm --prefix demo run test",
+    "demo:typecheck": "npm --prefix demo run typecheck",
+    "demo:build": "npm --prefix demo run build",
+    "demo:e2e": "npm --prefix demo run e2e"
   },
   "peerDependencies": {
     "frame-link": "^4.0.0",

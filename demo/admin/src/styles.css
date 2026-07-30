@@ -281,3 +281,40 @@ body {
   border-radius: 4px;
   padding: 1px 5px;
 }
+
+/* --- Versioning controls ------------------------------------------------- */
+.version-controls {
+  background: var(--admin-panel-bg);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.version-controls__state {
+  margin: 0;
+  font-size: 12px;
+  color: var(--admin-muted);
+}
+.version-controls__row {
+  display: flex;
+  gap: 8px;
+}
+.version-controls button {
+  flex: 1 1 auto;
+  padding: 7px 10px;
+  font-size: 13px;
+  color: var(--admin-panel-fg);
+  background: var(--admin-accent-soft);
+  border: 1px solid var(--admin-border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.version-controls button:hover:not(:disabled) {
+  border-color: var(--admin-accent);
+}
+.version-controls button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

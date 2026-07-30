@@ -1,34 +1,24 @@
 /**
  * Content-store public surface.
  *
- * Exports the swappable {@link ContentStore} interface, its op vocabulary, the
- * default in-memory implementation, and a factory seeded from the shared demo
- * content model — so the admin constructs a store without hand-wiring the seed.
+ * The demo backs the dashboard's `ContentStoreAdapter` seam with the pure
+ * `versioned-content-engine` (see {@link VceContentStoreAdapter}). The old
+ * in-memory store + bespoke `ContentStore` interface are gone: the dashboard now
+ * owns the interface (`ContentStoreAdapter`, `HostContentOp`) and the ops→store→
+ * inject pipeline, so this module only constructs the VCE-backed adapter, seeded
+ * from the shared demo content model.
  */
-
-export type {
-  ContentStore,
-  ContentSnapshot,
-  ContentStoreListener,
-} from "./ContentStore.js";
-export type {
-  StoreOperation,
-  EditOp,
-  DeleteOp,
-  InsertOp,
-  MoveOp,
-} from "./operations.js";
-export { InMemoryContentStore, type StoreSeedItem } from "./InMemoryContentStore.js";
 
 import { SEED_CONTENT } from "../content-model.js";
-import { InMemoryContentStore } from "./InMemoryContentStore.js";
-import type { ContentStore } from "./ContentStore.js";
+import { VceContentStoreAdapter } from "./VceContentStoreAdapter.js";
+
+export { VceContentStoreAdapter } from "./VceContentStoreAdapter.js";
 
 /**
- * Build the demo's default store, seeded with the shared {@link SEED_CONTENT}.
- * Returns the {@link ContentStore} interface (not the concrete class) so callers
- * stay decoupled from the implementation (NFR-003).
+ * Build the demo's default store, seeded with the shared {@link SEED_CONTENT} and
+ * backed by the versioned content engine. The seed is published once so it is the
+ * initial LIVE content; edits then accrue in a fresh draft until published.
  */
-export function createDemoContentStore(): ContentStore {
-  return new InMemoryContentStore(SEED_CONTENT);
+export function createDemoContentStore(): VceContentStoreAdapter {
+  return new VceContentStoreAdapter(SEED_CONTENT);
 }

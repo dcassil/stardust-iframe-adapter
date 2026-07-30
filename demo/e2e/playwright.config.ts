@@ -1,11 +1,14 @@
 import { defineConfig, devices } from "@playwright/test";
 
 /**
- * Playwright config for the demo E2E (SIFR-T-0011).
+ * Playwright config for the standalone demo E2E.
  *
- * Serves the demo pair via `webServer` (the same Vite dev servers the
- * `npm run demo` command starts, on the explicit localhost origins 5173/5174),
- * then runs the specs headless against the admin at 5173. CI-runnable.
+ * The demo is its own consumer project (`demo/package.json`), so the specs run
+ * with `demo/` as cwd (`npm --prefix demo run e2e`). The `webServer` entries
+ * spawn the same two Vite dev servers `npm run demo` starts, on the explicit
+ * localhost origins 5173 (admin) / 5174 (site), relative to the demo root.
+ * `reuseExistingServer` lets a manually-started pair be reused (needed when the
+ * sandbox blocks auto-spawn).
  */
 export default defineConfig({
   testDir: ".",
@@ -19,28 +22,26 @@ export default defineConfig({
     baseURL: "http://localhost:5173",
     trace: "on-first-retry",
   },
-  projects: [
-    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
-  ],
+  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: [
     {
-      command: "npx vite --config demo/site/vite.config.ts demo/site",
+      command: "npx vite --config site/vite.config.ts site",
       url: "http://localhost:5174",
-      cwd: fileURLToRepoRoot(),
+      cwd: demoRoot(),
       reuseExistingServer: true,
       timeout: 60_000,
     },
     {
-      command: "npx vite --config demo/admin/vite.config.ts demo/admin",
+      command: "npx vite --config admin/vite.config.ts admin",
       url: "http://localhost:5173",
-      cwd: fileURLToRepoRoot(),
+      cwd: demoRoot(),
       reuseExistingServer: true,
       timeout: 60_000,
     },
   ],
 });
 
-/** Repo root (two levels up from demo/e2e). */
-function fileURLToRepoRoot(): string {
-  return new URL("../../", import.meta.url).pathname;
+/** Demo project root (one level up from demo/e2e). */
+function demoRoot(): string {
+  return new URL("../", import.meta.url).pathname;
 }
