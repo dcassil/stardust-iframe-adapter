@@ -31,3 +31,11 @@ export {
   type StyleValue,
   type GenerateCssOptions,
 } from "./generateCss.js";
+
+export {
+  ADAPTER_STYLE_ATTR,
+  injectStyles,
+  clearStyles,
+  discoverStyleElements,
+  type DiscoveredStyleGroup,
+} from "./injector.js";

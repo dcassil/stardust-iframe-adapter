@@ -82,6 +82,11 @@ export {
   generateCss,
   type StyleValue,
   type GenerateCssOptions,
+  ADAPTER_STYLE_ATTR,
+  injectStyles,
+  clearStyles,
+  discoverStyleElements,
+  type DiscoveredStyleGroup,
 } from "./style/index.js";
 
 export {
