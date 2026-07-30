@@ -70,6 +70,12 @@ export const contentPayloadFixture: ContentPayload = {
   targetId: "target-1",
   contentId: "content-3",
   index: 2,
+  content: {
+    id: "content-3",
+    type: "text",
+    value: "hello",
+    styleGroup: "group-a",
+  },
   html: "<p>hello</p>",
   data: { kind: "text", nested: { count: 3, tags: ["a", "b"] } },
 };

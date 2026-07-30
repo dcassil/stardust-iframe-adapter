@@ -107,16 +107,50 @@ export interface ContentTarget {
 /* -------------------------------------------------------------------------- */
 
 /**
- * Minimal serializable payload for host → iframe content injection
- * (`cms/sendElements`). See open question OQ-1 in the inventory: the exact
- * per-content shape is intentionally minimal here and firms up in SIFR-I-0002.
- * `data` is an open, serializable bag; it must remain structured-clone-safe.
+ * The kind of a CMS content item. Grounded in the prototype `CmsContent.tsx`
+ * switch (`text` | `number` | `image` | `container`), promoted here to a
+ * protocol-level, app-agnostic discriminant so the iframe content renderer
+ * (SIFR-T-0016) dispatches on the protocol type rather than any Stardust-app
+ * model. Reserved/unknown kinds render as inert fallbacks.
+ */
+export type ContentKind = "text" | "number" | "image" | "container";
+
+/**
+ * A single, serializable CMS content item pushed host → iframe. Firmed up here
+ * (SIFR-I-0002) from the previously-minimal shape (OQ-1 in the inventory).
+ *
+ * `type` is the render discriminant; `value` is the primitive payload the
+ * renderer displays (text/number string, or image `src` URL). `styleGroup`
+ * scopes style rules (mirrors `data-style-group`). `container` items carry no
+ * `value` — they render nested targets instead. `data` remains an open,
+ * structured-clone-safe bag for forward-compatible extension.
+ */
+export interface CmsContent {
+  /** Stable id of the content item (becomes the element `id`). */
+  id: string;
+  /** Render discriminant. */
+  type: ContentKind;
+  /** Primitive display value (text/number text, or image `src`). */
+  value?: string;
+  /** Style-rule scope (`data-style-group`). */
+  styleGroup?: string;
+  /** For `container` items: lay children out as a column rather than a row. */
+  column?: boolean;
+  /** Open, serializable extension bag. Must stay structured-clone-safe. */
+  data?: SerializableValue;
+}
+
+/**
+ * Serializable payload for host → iframe content injection (`cms/sendElements`).
+ * Places one {@link CmsContent} item at a `(targetId, index)` slot.
  */
 export interface ContentPayload {
   targetId: string;
   contentId: string;
   index: number;
-  /** Optional pre-rendered HTML string for the content item. */
+  /** The content item to render at this slot. */
+  content: CmsContent;
+  /** Optional pre-rendered HTML string (bypasses type dispatch when present). */
   html?: string;
   /** Optional structured, serializable data describing the content. */
   data?: SerializableValue;
