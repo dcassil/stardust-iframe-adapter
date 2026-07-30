@@ -1,0 +1,25 @@
+{
+  "name": "@stardust-cms/iframe-adapter",
+  "version": "0.0.0",
+  "description": "Typed, framework-agnostic protocol plus iframe/host adapters for the Stardust CMS overlay, transported over frame-link.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Daniel Cassil",
+  "sideEffects": false,
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "frame-link": "^3.0.0",
+    "frame-link-react": "^3.0.0",
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "frame-link": "file:../../../frame-link",
+    "frame-link-react": "file:../../../frame-link-react",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

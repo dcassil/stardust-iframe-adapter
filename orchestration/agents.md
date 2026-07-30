@@ -19,9 +19,17 @@ Never act on, monitor, or stop any agent NOT listed here — it may belong to an
 | SIFR-I-0005 | Style Rules As Supporting Feature | ab30ff5ed198ea712 | bg subagent | DONE — 4 tasks (T-0026,0027,0028,0029), decompose |
 | SIFR-I-0006 | Presence Demo, Not Collaboration Package | a3b7b0416a700e1ab | bg subagent | DONE — 4 tasks (T-0022,0023,0024,0025), decompose |
 
-## Phase B — Task execution (per initiative task set)
+## Phase B — Task execution
 
-(to be populated after decomposition)
+**PUBLIC REPO IDENTITY (recruiter-facing, will be public):** repo name `stardust-iframe-adapter`; npm package `@stardust-cms/iframe-adapter`; single monorepo (package + demo). OLD prototype repos (`Stardust-CMS-App`, `-backup`) are READ-ONLY copy sources — NEVER modified, branched, or added as remote/submodule. All work lives in the NEW repo only.
+
+**Env facts:** prototype at `code_temp/Stardust-CMS-App` + `Stardust-CMS-APP-Original-backup`; transport at `code_temp/frame-link`, `code_temp/frame-link-react`; review docs `code_temp/stardust-package-extraction-review.md`, `code_temp/stardust-metis-project-initialization-plan.md`. Node 20, npm+pnpm. Git repo initialized at project root on `main`. ALL metis calls use project_path ending in `.metis`.
+
+**Wave plan (deps):** W1: 0001 (solo, foundational) → W2: 0002+0003 (parallel worktrees, disjoint dirs) → W3: 0005 → W4: 0004 (demo) → W5: 0006 (presence).
+
+| Wave | Initiative | Agent ID | Branch/worktree | Status |
+| ---- | ---------- | -------- | --------------- | ------ |
+| W1 | SIFR-I-0001 Protocol (T-0001..0005) | a32b84ce0fad381c2 | main | RUNNING |
 
 ---
 
