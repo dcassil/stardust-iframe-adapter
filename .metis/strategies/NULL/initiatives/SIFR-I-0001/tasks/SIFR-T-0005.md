@@ -4,14 +4,14 @@ level: task
 title: "ADR: Package Boundary And Frame-Link-Over-Old-Transport Decision"
 short_code: "SIFR-T-0005"
 created_at: 2026-07-30T16:01:24.445950+00:00
-updated_at: 2026-07-30T16:01:24.445950+00:00
+updated_at: 2026-07-30T16:22:33.226180+00:00
 parent: SIFR-I-0001
 blocked_by: []
 archived: false
 
 tags:
   - "#task"
-  - "#phase/todo"
+  - "#phase/active"
 
 
 exit_criteria_met: false
@@ -28,6 +28,8 @@ initiative_id: SIFR-I-0001
 ## Objective **[REQUIRED]**
 
 Author the load-bearing Architecture Decision Record for the `@stardust-cms/iframe-adapter` package. The ADR records two intertwined decisions: (a) the package boundary — a single `@stardust-cms/iframe-adapter` package with split iframe/host entry points over one framework-agnostic protocol module — and (b) using FLINK's `frame-link`/`frame-link-react` as the transport instead of resurrecting Stardust's bespoke `usePostMessage`/`useFrame`. This record is what SIFR-I-0002/0003 and future maintainers consult to understand why the boundary is drawn where it is. It must follow Daniel's global ADR rules: full context, decision, alternatives with reasoning, consequences (positive and negative), and follow-up actions.
+
+## Acceptance Criteria
 
 ## Acceptance Criteria **[REQUIRED]**
 
@@ -55,4 +57,12 @@ Recommended Agent: opus + medium
 
 ## Status Updates **[REQUIRED]**
 
-*To be added during implementation*
+### Completion notes
+Authored ADR **SIFR-A-0001** ("Package Boundary And Frame-Link-Over-Old-Transport") at `.metis/adrs/SIFR-A-0001.md`, fully populated per the global ADR rules:
+- **Context**: stringly postMessage state, two disagreeing generations (incl. the latent scroll emitter/listener name mismatch), the raw `DOMRect` serialization hazard, and FLINK publication-readiness coupling.
+- **Decision**: `@stardust-cms/iframe-adapter`, dual `.`/`./host` (+ `./protocol`) split, framework-agnostic protocol module, `frame-link`/`frame-link-react` + `react >=18` transport/peerDeps.
+- **Alternatives**: 5 rejected options (keep strings; reuse bespoke transport; pass `DOMRect`; single entry; version content here) with pros/cons/risk/cost table + rationale.
+- **Consequences**: positive (typed/tested/secure transport, reusable types, bundle separation) and negative (FLINK release-cadence coupling, migration cost, reserved-channel risk) + neutral.
+- **Follow-up**: SIFR-I-0002/0003/0005/0006, SVER, and the API-proposal review sign-off gate.
+- Grounded in concrete artifacts from SIFR-T-0001/0002/0004 (cited by path + registry keys).
+Transitioned ADR draft → discussion → decided.

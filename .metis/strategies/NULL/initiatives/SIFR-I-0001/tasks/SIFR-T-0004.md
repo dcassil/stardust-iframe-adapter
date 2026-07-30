@@ -4,14 +4,14 @@ level: task
 title: "Package Metadata: Name, Exports Iframe/Host Split, Peer Deps, And Responsibilities Table"
 short_code: "SIFR-T-0004"
 created_at: 2026-07-30T16:01:23.165487+00:00
-updated_at: 2026-07-30T16:20:25.719873+00:00
+updated_at: 2026-07-30T16:22:28.642470+00:00
 parent: SIFR-I-0001
 blocked_by: []
 archived: false
 
 tags:
   - "#task"
-  - "#phase/active"
+  - "#phase/completed"
 
 
 exit_criteria_met: false
@@ -28,6 +28,8 @@ initiative_id: SIFR-I-0001
 ## Objective **[REQUIRED]**
 
 Specify the public package identity and boundary so that SIFR-I-0002 (iframe side) and SIFR-I-0003 (host side) build against a settled surface: the package name, the dual `exports` map that splits the iframe entry from the host entry, the peer dependencies, and the host-vs-iframe responsibilities table. The goal is that a public site bundle never pulls in host overlay code and vice versa, and that the ownership of each message is unambiguous.
+
+## Acceptance Criteria
 
 ## Acceptance Criteria
 
@@ -57,4 +59,11 @@ Recommended Agent: opus + low
 
 ## Status Updates **[REQUIRED]**
 
-*To be added during implementation*
+### Completion notes
+Finalized package identity and boundary.
+Files: `package.json` (name `@stardust-cms/iframe-adapter`, ESM, peerDeps frame-link/frame-link-react/react>=18, exports map), `tsconfig.build.json` (real emitting build), `src/iframe.ts` / `src/host.ts` / `src/protocol.ts` (isolated entry stubs), `docs/responsibilities.md`, `README.md` (public-facing).
+- Exports: `.` and `./iframe` → iframe entry; `./host` → host entry; `./protocol` → React-free protocol.
+- Bundle separation proven: built `dist/iframe.js` and `dist/host.js` each import ONLY `./protocol/index.js` — they never reference each other, so a site bundle can't pull host code and vice versa.
+- Responsibilities table maps every `cms/*` message to sender/receiver/side; host-sent = requestTargetPositions/sendElements/updateStyles, iframe-sent = sendElementPositions/sendScrollPositions.
+- No wildcard `*` origin anywhere (grep NO_WILDCARD_ORIGIN).
+Verification: `tsc --noEmit` OK; `vitest run` 14 passed; `npm run build` emits split dist matching the exports map.
