@@ -4,14 +4,14 @@ level: task
 title: "Playwright E2E For Overlay Alignment And Live Content Injection"
 short_code: "SIFR-T-0011"
 created_at: 2026-07-30T16:02:14.749498+00:00
-updated_at: 2026-07-30T17:40:02.871960+00:00
+updated_at: 2026-07-30T17:47:36.335+00:00
 parent: SIFR-I-0004
 blocked_by: []
 archived: false
 
 tags:
   - "#task"
-  - "#phase/active"
+  - "#phase/completed"
 
 
 exit_criteria_met: false
@@ -28,6 +28,8 @@ initiative_id: SIFR-I-0004
 ## Objective **[REQUIRED]**
 
 Write the Playwright end-to-end test that guards the initiative's two headline success criteria: overlay geometry alignment under window resize and iframe scroll, and live content injection. This demo is the end-to-end integration surface for SIFR-I-0002 (iframe streaming) + SIFR-I-0003 (host mapping); this test is the automated guard against alignment regressions (which regress easily) and the live-injection flow. It runs against the locally served demo pair and is CI-headless-runnable.
+
+## Acceptance Criteria
 
 ## Acceptance Criteria
 
