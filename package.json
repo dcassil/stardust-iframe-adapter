@@ -44,6 +44,7 @@
     "demo": "concurrently -k -n site,admin -c magenta,cyan \"npm:demo:site\" \"npm:demo:admin\"",
     "demo:site": "vite --config demo/site/vite.config.ts demo/site",
     "demo:admin": "vite --config demo/admin/vite.config.ts demo/admin",
+    "demo:test": "vitest run -c demo/vitest.config.ts",
     "demo:typecheck": "tsc -p demo/site/tsconfig.json && tsc -p demo/admin/tsconfig.json",
     "demo:build": "vite build --config demo/site/vite.config.ts demo/site && vite build --config demo/admin/vite.config.ts demo/admin",
     "demo:e2e": "playwright test -c demo/e2e/playwright.config.ts"

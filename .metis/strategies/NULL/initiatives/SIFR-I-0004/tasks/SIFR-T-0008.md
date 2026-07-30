@@ -4,14 +4,14 @@ level: task
 title: "Admin Shell With Iframe Embed And Host Wiring And Connection Status"
 short_code: "SIFR-T-0008"
 created_at: 2026-07-30T16:02:03.164018+00:00
-updated_at: 2026-07-30T17:15:32.884495+00:00
+updated_at: 2026-07-30T17:27:40.093867+00:00
 parent: SIFR-I-0004
 blocked_by: []
 archived: false
 
 tags:
   - "#task"
-  - "#phase/active"
+  - "#phase/completed"
 
 
 exit_criteria_met: false
@@ -28,6 +28,8 @@ initiative_id: SIFR-I-0004
 ## Objective **[REQUIRED]**
 
 Build the admin shell — the host app that embeds the demo site (SIFR-T-0007) in an iframe, mounts `useStardustHost` (from the SIFR-I-0003 host-side package), establishes the frame-link connection over an explicit localhost origin, and renders the connection lifecycle (connecting/connected/error) in the UI. This is the structural "host" half of the demo pair: it stands up the iframe, the scaled canvas, and the connection status strip that later tasks build overlays and panels onto. It replaces the entangled prototype `code_temp/Stardust-CMS-App/app/` (`IFrame.tsx` with `transform: scale(...)`, `ConnectStatus`, and the `useFrame`/overlay machinery) with a clean consumer of the extracted host package.
+
+## Acceptance Criteria
 
 ## Acceptance Criteria
 

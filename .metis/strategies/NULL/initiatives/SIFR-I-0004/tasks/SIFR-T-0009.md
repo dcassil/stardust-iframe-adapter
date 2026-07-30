@@ -4,14 +4,14 @@ level: task
 title: "In-Memory Content Store Behind Swappable Interface With Operation Application"
 short_code: "SIFR-T-0009"
 created_at: 2026-07-30T16:02:06.885799+00:00
-updated_at: 2026-07-30T16:02:06.885799+00:00
+updated_at: 2026-07-30T17:27:51.520007+00:00
 parent: SIFR-I-0004
 blocked_by: []
 archived: false
 
 tags:
   - "#task"
-  - "#phase/todo"
+  - "#phase/active"
 
 
 exit_criteria_met: false
@@ -28,6 +28,8 @@ initiative_id: SIFR-I-0004
 ## Objective **[REQUIRED]**
 
 Build the in-memory content store that backs the admin's editing, sitting behind a small, well-defined interface so the SVER project can later swap in its versioned engine without touching overlay/demo UI (initiative NFR-003). The store holds the demo content tree, applies structured operations (insert/move/edit/delete) matching SIFR-I-0003's structured-op vocabulary, and produces the payload re-sent to the site via `cms/sendElements`. Correctness of operation application is unit-tested against the same operation set SVER will later satisfy.
+
+## Acceptance Criteria
 
 ## Acceptance Criteria **[REQUIRED]**
 
@@ -80,4 +82,17 @@ Define `ContentStore` as a TypeScript interface (`getContent()`, `apply(op)`, `s
 
 ## Status Updates **[REQUIRED]**
 
-*To be added during implementation*
+### Completion notes
+
+Built the content store under `demo/shared/src/store/` — a pure, React/transport-free module.
+
+- **Swappable interface (`ContentStore`):** `getSnapshot()`, `apply(op)`, `subscribe(listener)`. Snapshot type is `readonly ContentPayload[]` — exactly the `cms/sendElements` element shape — so a subscriber feeds each item straight to the sender. Deliberately minimal for SVER to reimplement (NFR-003).
+- **Op vocabulary:** `insert` and `move` reuse SIFR-I-0003's `InsertOp`/`MoveOp` from `@stardust-cms/iframe-adapter/host` directly (no adapter glue). `edit` and `delete` are store-level ops (host overlay vocabulary is insert/move/select only), defined with the same `kind` discriminant. `select` is excluded — it mutates nothing.
+- **`InMemoryContentStore`:** holds `Map<targetId, CmsContent[]>`; flat targets and the nested container's child targets (`col.1`/`col.2` style) are all just map entries. Each op is a reducer over the tree; snapshots are cloned so they never alias internal state. Insert clamps out-of-range indices (append at boundary); move removes-then-inserts (handles within/cross-target and same-position); edit preserves id+type; delete removes by id.
+- **`createDemoContentStore()`** seeds from the shared `SEED_CONTENT`, returning the interface type (not the concrete class).
+- **Tests (14, all pass) — `demo/vitest.config.ts`:** insert (incl. nested container, boundary/append, unknown-type→text fallback), move (within, cross-target-into-container, same-position no-op), edit, delete (incl. last child of a container → empty), subscribe/unsubscribe, snapshot non-aliasing, and TC-002 interface parity (a second `ContentStore` impl satisfies the same op set; UI depends only on the interface).
+
+Verification: `npx vitest run -c demo/vitest.config.ts` → 14 passed; admin tsconfig (which includes `../shared`) typechecks clean; library `tsc` + `vitest` (79) untouched and green.
+
+### TC-001: Pass — structured operations apply correctly incl. nested-container insert/move; snapshot matches cms/sendElements shape.
+### TC-002: Pass — interface parity verified via a second implementation; no UI coupling to the concrete class.

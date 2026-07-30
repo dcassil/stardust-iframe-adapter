@@ -34,6 +34,9 @@ export const demoAliases: Record<string, string> = {
   "@demo/shared/content-model": fileURLToPath(
     new URL("./src/content-model.ts", import.meta.url),
   ),
+  "@demo/shared/store": fileURLToPath(
+    new URL("./src/store/index.ts", import.meta.url),
+  ),
   // frame-link peers from sibling prebuilt dist (they ship dist js + d.ts).
   "frame-link-react": sibling("frame-link-react/dist/index.js"),
   "frame-link": sibling("frame-link/dist/index.js"),

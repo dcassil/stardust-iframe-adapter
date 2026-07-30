@@ -23,6 +23,7 @@
       "@stardust-cms/iframe-adapter/iframe": ["../src/iframe.ts"],
       "@stardust-cms/iframe-adapter": ["../src/iframe.ts"],
       "@demo/shared/content-model": ["shared/src/content-model.ts"],
+      "@demo/shared/store": ["shared/src/store/index.ts"],
       "frame-link-react": ["../../../frame-link-react/dist/index.d.ts"],
       "frame-link": ["../../../frame-link/dist/index.d.ts"]
     }
