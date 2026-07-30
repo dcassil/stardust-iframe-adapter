@@ -35,7 +35,12 @@ import {
   type ContentByTarget,
   type StardustContentContextValue,
 } from "./content-context.js";
-import { CHANNELS, useStardustHandler } from "./frameLink.js";
+import {
+  CHANNELS,
+  useStardustHandler,
+  useStardustSend,
+} from "./frameLink.js";
+import { usePositionPublishing } from "./usePositionPublishing.js";
 
 /** Props for {@link StardustAdapterProvider}. */
 export interface StardustAdapterProviderProps {
@@ -101,6 +106,26 @@ export function StardustAdapterProvider({
   /* --- cms/sendElements → content state (REQ-006) ---------------------- */
   useStardustHandler(CHANNELS.sendElements, (payload) => {
     setContent((previous) => mergeContent(previous, payload));
+  });
+
+  /* --- Observer + throttled scroll/resize publishing (SIFR-T-0015) ----- */
+  const sendPositions = useStardustSend(CHANNELS.sendElementPositions);
+  const sendScroll = useStardustSend(CHANNELS.sendScrollPositions);
+
+  usePositionPublishing({
+    publishPositions: (positions) => {
+      // Fire-and-forget: a send before the peer is connected rejects; that is a
+      // transport concern, not a publishing bug.
+      void sendPositions(positions).catch(() => {
+        /* not connected yet / peer gone */
+      });
+    },
+    publishScroll: (scroll) => {
+      void sendScroll(scroll).catch(() => {
+        /* not connected yet / peer gone */
+      });
+    },
+    ...(root !== undefined ? { root } : {}),
   });
 
   const applyContent = useCallback<StardustContentContextValue["applyContent"]>(

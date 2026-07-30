@@ -39,3 +39,11 @@ export {
   useStardustHandler,
   useStardustSend,
 } from "./iframe/frameLink.js";
+
+// Observer + throttled publishing bundle (SIFR-T-0015).
+export {
+  usePositionPublishing,
+  type PositionPublishingOptions,
+} from "./iframe/usePositionPublishing.js";
+export { readScrollState } from "./iframe/scroll-state.js";
+export { rafThrottle, type RafThrottled } from "./iframe/raf-throttle.js";
