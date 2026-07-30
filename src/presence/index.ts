@@ -23,6 +23,18 @@ export {
 } from "./MockPresenceProvider.js";
 
 export {
+  SocketIoPresenceProvider,
+  PRESENCE_EVENTS,
+  PRESENCE_SERVER_EVENTS,
+  type SocketIoPresenceProviderOptions,
+  type SocketFactory,
+  type MinimalSocket,
+  type PointerEnvelope,
+  type EditContextEnvelope,
+  type LeaveEnvelope,
+} from "./SocketIoPresenceProvider.js";
+
+export {
   RemoteCursors,
   EditLockIndicators,
   usePresenceParticipants,
