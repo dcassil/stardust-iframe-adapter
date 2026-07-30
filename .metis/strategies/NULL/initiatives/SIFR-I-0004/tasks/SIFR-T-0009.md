@@ -4,14 +4,14 @@ level: task
 title: "In-Memory Content Store Behind Swappable Interface With Operation Application"
 short_code: "SIFR-T-0009"
 created_at: 2026-07-30T16:02:06.885799+00:00
-updated_at: 2026-07-30T17:27:51.520007+00:00
+updated_at: 2026-07-30T17:31:22.022342+00:00
 parent: SIFR-I-0004
 blocked_by: []
 archived: false
 
 tags:
   - "#task"
-  - "#phase/active"
+  - "#phase/completed"
 
 
 exit_criteria_met: false
@@ -28,6 +28,8 @@ initiative_id: SIFR-I-0004
 ## Objective **[REQUIRED]**
 
 Build the in-memory content store that backs the admin's editing, sitting behind a small, well-defined interface so the SVER project can later swap in its versioned engine without touching overlay/demo UI (initiative NFR-003). The store holds the demo content tree, applies structured operations (insert/move/edit/delete) matching SIFR-I-0003's structured-op vocabulary, and produces the payload re-sent to the site via `cms/sendElements`. Correctness of operation application is unit-tested against the same operation set SVER will later satisfy.
+
+## Acceptance Criteria
 
 ## Acceptance Criteria
 

@@ -124,3 +124,160 @@ body {
 .admin-overlay-layer > * {
   pointer-events: auto;
 }
+
+/* --- Styled overlay primitives (SIFR-T-0010) ----------------------------- */
+.ov-group {
+  pointer-events: none;
+}
+.ov-group > * {
+  pointer-events: auto;
+}
+
+/* TargetAreaOverlay: a subtle drop area, highlighted on hover / drag-over. */
+.ov-target {
+  border: 1.5px dashed rgba(99, 102, 241, 0.45);
+  border-radius: 6px;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+.ov-target:hover {
+  background: var(--admin-accent-soft);
+  border-color: var(--admin-accent);
+}
+.ov-target--container {
+  border-style: solid;
+  border-color: rgba(236, 72, 153, 0.4);
+}
+.ov-target--selected {
+  outline: 2px solid var(--admin-accent);
+  outline-offset: 1px;
+}
+
+/* Item hit-box that the library renders inside the target (drag source). */
+.ov-item-hit {
+  cursor: grab;
+}
+
+/* Selection chrome per content item (layered above the hit box). */
+.ov-item {
+  border-radius: 4px;
+  cursor: pointer;
+  transition: box-shadow 0.12s ease;
+}
+.ov-item:hover {
+  box-shadow: inset 0 0 0 2px rgba(99, 102, 241, 0.6);
+}
+.ov-item--selected {
+  box-shadow: inset 0 0 0 2px var(--admin-selected);
+  background: rgba(236, 72, 153, 0.08);
+}
+
+.ov-delete {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--admin-err);
+  color: #fff;
+  font-size: 15px;
+  line-height: 22px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+  z-index: 2;
+}
+.ov-group:hover .ov-delete {
+  opacity: 0.92;
+}
+.ov-delete:hover {
+  opacity: 1;
+}
+
+/* --- Sidebar panels ------------------------------------------------------ */
+.panel {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius);
+  padding: 14px;
+}
+.panel__title {
+  margin: 0 0 6px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--admin-muted);
+}
+.panel__hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--admin-muted);
+}
+.panel__meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 10px;
+  margin: 0 0 12px;
+  font-size: 12px;
+}
+.panel__meta dt {
+  color: var(--admin-muted);
+}
+.panel__meta dd {
+  margin: 0;
+  font-family: ui-monospace, monospace;
+  word-break: break-all;
+}
+.panel__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+.panel__field textarea,
+.panel__field input {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--admin-border);
+  background: #0b1220;
+  color: var(--admin-panel-fg);
+  font: inherit;
+  resize: vertical;
+}
+.panel__field textarea:focus,
+.panel__field input:focus {
+  outline: 2px solid var(--admin-accent);
+  border-color: transparent;
+}
+
+.palette {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+.palette__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--admin-border);
+  border-radius: 6px;
+  background: #0b1220;
+  cursor: grab;
+  font-size: 13px;
+  user-select: none;
+}
+.palette__item:hover {
+  border-color: var(--admin-accent);
+}
+.palette__type {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--admin-accent);
+  border: 1px solid var(--admin-accent);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
