@@ -21,3 +21,12 @@ export {
   type MockPresenceProviderOptions,
   type PresenceClock,
 } from "./MockPresenceProvider.js";
+
+export {
+  RemoteCursors,
+  EditLockIndicators,
+  usePresenceParticipants,
+  type RemoteCursorsProps,
+  type EditLockIndicatorsProps,
+  type LockTarget,
+} from "./overlays.js";
