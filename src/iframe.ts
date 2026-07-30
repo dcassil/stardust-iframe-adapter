@@ -79,6 +79,9 @@ export {
   type StyleAllowlist,
   type ValidatedValue,
   type ValueValidator,
+  generateCss,
+  type StyleValue,
+  type GenerateCssOptions,
 } from "./style/index.js";
 
 export {

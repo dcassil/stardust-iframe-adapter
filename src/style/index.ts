@@ -25,3 +25,9 @@ export {
   type ValidatedValue,
   type ValueValidator,
 } from "./allowlist.js";
+
+export {
+  generateCss,
+  type StyleValue,
+  type GenerateCssOptions,
+} from "./generateCss.js";
