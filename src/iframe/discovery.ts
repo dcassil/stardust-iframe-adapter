@@ -17,6 +17,12 @@ import type {
   ContentTarget,
   Geometry,
 } from "../protocol/index.js";
+import {
+  ATTR_CONTAINER_TARGET,
+  ATTR_CONTENT,
+  ATTR_STYLE_GROUP,
+  ATTR_TARGET,
+} from "./attributes.js";
 
 /* -------------------------------------------------------------------------- */
 /* Constants                                                                  */
@@ -35,19 +41,6 @@ import type {
  * exact inset applied.
  */
 export const CONTAINER_INSET = 10;
-
-/* -------------------------------------------------------------------------- */
-/* Attribute contract                                                         */
-/* -------------------------------------------------------------------------- */
-
-/** `data-cms` → `targetId`. Marks a discoverable CMS target. */
-const ATTR_TARGET = "data-cms";
-/** `data-cms-content` → a content item nested inside a target. */
-const ATTR_CONTENT = "data-cms-content";
-/** `data-cms-container-target` → the target (or child) is a container. */
-const ATTR_CONTAINER = "data-cms-container-target";
-/** `data-style-group` → `styleGroup` (style-rule scope). */
-const ATTR_STYLE_GROUP = "data-style-group";
 
 /* -------------------------------------------------------------------------- */
 /* Options                                                                    */
@@ -136,7 +129,7 @@ export function discoverTargets(
  * `getIsTargetContainer()`.
  */
 function isTargetContainer(element: HTMLElement): boolean {
-  return element.querySelector(`[${ATTR_CONTAINER}]`) !== null;
+  return element.querySelector(`[${ATTR_CONTAINER_TARGET}]`) !== null;
 }
 
 /**

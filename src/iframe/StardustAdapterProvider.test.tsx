@@ -98,6 +98,7 @@ describe("StardustAdapterProvider", () => {
       targetId: "hero",
       contentId: "c1",
       index: 0,
+      content: { id: "c1", type: "text", value: "hi", styleGroup: "text" },
       html: "<p>hi</p>",
     });
 

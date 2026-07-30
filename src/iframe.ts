@@ -47,3 +47,25 @@ export {
 } from "./iframe/usePositionPublishing.js";
 export { readScrollState } from "./iframe/scroll-state.js";
 export { rafThrottle, type RafThrottled } from "./iframe/raf-throttle.js";
+
+// Components + attribute contract (SIFR-T-0016).
+export {
+  EditableTarget,
+  type EditableTargetProps,
+} from "./iframe/EditableTarget.js";
+export {
+  ContentRenderer,
+  type ContentRendererProps,
+} from "./iframe/ContentRenderer.js";
+export { StyleElement, type StyleElementProps } from "./iframe/StyleElement.js";
+export {
+  ATTR_TARGET,
+  ATTR_CONTENT,
+  ATTR_CONTAINER_TARGET,
+  ATTR_CONTAINER,
+  ATTR_STYLE_GROUP,
+  ATTR_STYLE_ELEMENT,
+  ATTR_STYLE_NAME,
+  ATTR_STYLE_ID,
+  ATTR_STYLE_RULES,
+} from "./iframe/attributes.js";
