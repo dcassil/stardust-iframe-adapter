@@ -4,14 +4,14 @@ level: task
 title: "Package Metadata: Name, Exports Iframe/Host Split, Peer Deps, And Responsibilities Table"
 short_code: "SIFR-T-0004"
 created_at: 2026-07-30T16:01:23.165487+00:00
-updated_at: 2026-07-30T16:01:23.165487+00:00
+updated_at: 2026-07-30T16:20:25.719873+00:00
 parent: SIFR-I-0001
 blocked_by: []
 archived: false
 
 tags:
   - "#task"
-  - "#phase/todo"
+  - "#phase/active"
 
 
 exit_criteria_met: false
@@ -28,6 +28,8 @@ initiative_id: SIFR-I-0001
 ## Objective **[REQUIRED]**
 
 Specify the public package identity and boundary so that SIFR-I-0002 (iframe side) and SIFR-I-0003 (host side) build against a settled surface: the package name, the dual `exports` map that splits the iframe entry from the host entry, the peer dependencies, and the host-vs-iframe responsibilities table. The goal is that a public site bundle never pulls in host overlay code and vice versa, and that the ownership of each message is unambiguous.
+
+## Acceptance Criteria
 
 ## Acceptance Criteria **[REQUIRED]**
 

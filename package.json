@@ -1,12 +1,44 @@
 {
   "name": "@stardust-cms/iframe-adapter",
   "version": "0.0.0",
-  "description": "Typed, framework-agnostic protocol plus iframe/host adapters for the Stardust CMS overlay, transported over frame-link.",
+  "description": "Typed, framework-agnostic protocol plus iframe/host adapters for building in-iframe visual editors, transported over frame-link.",
   "type": "module",
   "license": "MIT",
   "author": "Daniel Cassil",
   "sideEffects": false,
+  "keywords": [
+    "iframe",
+    "postMessage",
+    "frame-link",
+    "cms",
+    "visual-editor",
+    "overlay",
+    "react"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/iframe.d.ts",
+      "import": "./dist/iframe.js"
+    },
+    "./iframe": {
+      "types": "./dist/iframe.d.ts",
+      "import": "./dist/iframe.js"
+    },
+    "./host": {
+      "types": "./dist/host.d.ts",
+      "import": "./dist/host.js"
+    },
+    "./protocol": {
+      "types": "./dist/protocol.d.ts",
+      "import": "./dist/protocol.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },

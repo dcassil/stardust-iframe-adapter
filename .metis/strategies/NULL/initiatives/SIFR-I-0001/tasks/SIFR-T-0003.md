@@ -4,14 +4,14 @@ level: task
 title: "Structured-Clone Serializability Round-Trip Tests Over Sample Payloads"
 short_code: "SIFR-T-0003"
 created_at: 2026-07-30T16:01:21.123510+00:00
-updated_at: 2026-07-30T16:19:14.681398+00:00
+updated_at: 2026-07-30T16:20:21.359723+00:00
 parent: SIFR-I-0001
 blocked_by: []
 archived: false
 
 tags:
   - "#task"
-  - "#phase/active"
+  - "#phase/completed"
 
 
 exit_criteria_met: false
@@ -28,6 +28,8 @@ initiative_id: SIFR-I-0001
 ## Objective **[REQUIRED]**
 
 Prove NFR-001 (serializability) for the protocol module by adding a focused test file that runs each sample payload type through a structured-clone round-trip and asserts deep equality. This guarantees every geometry, scroll, content-target, and message payload survives `postMessage` transport (which uses the structured clone algorithm) with no DOM nodes, functions, or class instances leaking in. It is the runtime companion to SIFR-T-0002's compile-time type assertions.
+
+## Acceptance Criteria
 
 ## Acceptance Criteria
 
@@ -78,6 +80,12 @@ Prove NFR-001 (serializability) for the protocol module by adding a focused test
 
 ### Technical Approach
 Single focused test file following the initiative's stated Jest structured-clone pattern. Use Node's global `structuredClone` (Node 17+). Import fixtures from or alongside the protocol module. Keep it mechanical — no new abstractions.
+
+### Completion notes
+Files: `src/protocol/fixtures.ts` (typed fixtures for every payload, `satisfies` the real protocol types so they can't drift) and `src/protocol/__tests__/serializability.test.ts`.
+Uses **vitest** (Jest-compatible API) per the package's configured test runner rather than Jest; Node global `structuredClone`.
+Covers: Geometry (TC-001), ScrollState, ChildContent, ContentTarget w/ nested ChildContent[] (TC-002), ContentPayload, StyleUpdatePayload; every request/response registry key; a coverage assertion over `MESSAGE_KEYS`; negative guards for a function payload (TC-003, throws) and a class instance (loses prototype/method).
+Verification: `npx tsc --noEmit` clean; `npx vitest run` → Test Files 1 passed (1), Tests 14 passed (14).
 
 ### Dependencies
 Depends on SIFR-T-0002 (protocol types must exist to build fixtures). Independent of SIFR-T-0004 and SIFR-T-0005.
