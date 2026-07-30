@@ -19,6 +19,7 @@
     "baseUrl": ".",
     "paths": {
       "@stardust-cms/iframe-adapter/host": ["../src/host.ts"],
+      "@stardust-cms/iframe-adapter/presence": ["../src/presence.ts"],
       "@stardust-cms/iframe-adapter/protocol": ["../src/protocol.ts"],
       "@stardust-cms/iframe-adapter/iframe": ["../src/iframe.ts"],
       "@stardust-cms/iframe-adapter": ["../src/iframe.ts"],

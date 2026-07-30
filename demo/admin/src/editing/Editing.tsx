@@ -35,6 +35,8 @@ import { SidePanel } from "./SidePanel";
 import { StylePanel } from "./StylePanel";
 import { StoreBridge } from "./StoreBridge";
 import { EditingContext, type EditingContextValue } from "./editing-context";
+import { PresenceLayer } from "./PresenceLayer";
+import { PRESENCE_ENABLED } from "./presence-config";
 
 /** Default value for a newly inserted block, by type. */
 function defaultValueFor(type: string): string | undefined {
@@ -136,6 +138,9 @@ export function Editing({ render }: EditingProps): ReactNode {
         selectedTargetId={selectedTargetId}
         onDeleteItem={onDeleteItem}
       />
+      {/* Presence overlays (remote cursors + edit-locks) — mounted ONLY behind
+          the off-by-default flag, inside the same overlay layer. */}
+      {PRESENCE_ENABLED ? <PresenceLayer /> : null}
     </>
   );
 
