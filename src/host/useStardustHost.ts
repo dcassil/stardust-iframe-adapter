@@ -34,9 +34,7 @@ import type { ContentTarget, ChildContent } from "../protocol/index.js";
 import { mapGeometry, type MappedGeometry } from "./mapGeometry.js";
 import type {
   ConnectionState,
-  InsertOp,
-  MoveOp,
-  SelectOp,
+  OperationCallbacks,
 } from "./operations.js";
 import type { StardustFrameLinkRegistry } from "./registry.js";
 
@@ -57,8 +55,12 @@ export interface MappedTarget {
   children: MappedChild[];
 }
 
-/** Options for {@link useStardustHost}. */
-export interface UseStardustHostOptions {
+/**
+ * Options for {@link useStardustHost}. Extends {@link OperationCallbacks} so the
+ * consumer can register edit-intent callbacks on the hook; the same callbacks
+ * are returned (as `callbacks`) for convenient threading to the overlays.
+ */
+export interface UseStardustHostOptions extends OperationCallbacks {
   /**
    * The explicit iframe origin. Must not be `"*"`; passing `"*"` throws. This is
    * asserted here and expected to match the `FrameLinkProvider`'s
@@ -71,12 +73,6 @@ export interface UseStardustHostOptions {
    * `-40` header offset. Defaults to `0`.
    */
   headerOffset?: number;
-  /** Called when a new block is dropped into a target. */
-  onInsert?: (op: InsertOp) => void;
-  /** Called when an existing content item is relocated. */
-  onMove?: (op: MoveOp) => void;
-  /** Called when a target/content item is selected. */
-  onSelect?: (op: SelectOp) => void;
 }
 
 /** The value returned by {@link useStardustHost}. */
@@ -87,6 +83,11 @@ export interface UseStardustHostResult {
   scale: number;
   /** Connection lifecycle state. */
   connectionState: ConnectionState;
+  /**
+   * The edit-intent callbacks passed in `options`, bundled for convenient
+   * spreading onto the overlay primitives (`<TargetAreaOverlay {...callbacks} />`).
+   */
+  callbacks: OperationCallbacks;
 }
 
 type HostRegistry = StardustFrameLinkRegistry;
@@ -284,5 +285,15 @@ export function useStardustHost(
         ? "connecting"
         : "disconnected";
 
-  return { targets, scale, connectionState };
+  const callbacks = useMemo<OperationCallbacks>(() => {
+    const opts = optionsRef.current;
+    return {
+      ...(opts.onInsert ? { onInsert: opts.onInsert } : {}),
+      ...(opts.onMove ? { onMove: opts.onMove } : {}),
+      ...(opts.onSelect ? { onSelect: opts.onSelect } : {}),
+    };
+    // Re-bundle when the identity of any callback changes.
+  }, [options.onInsert, options.onMove, options.onSelect]);
+
+  return { targets, scale, connectionState, callbacks };
 }

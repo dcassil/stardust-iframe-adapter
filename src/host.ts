@@ -23,7 +23,20 @@ export type {
   MappedChild,
 } from "./host/useStardustHost.js";
 
-export { opFromDataTransfer, DATA_TRANSFER_KEYS } from "./host/operations.js";
+export {
+  TargetAreaOverlay,
+  ContentItemOverlay,
+} from "./host/overlays.js";
+export type {
+  TargetAreaOverlayProps,
+  ContentItemOverlayProps,
+} from "./host/overlays.js";
+
+export {
+  opFromDataTransfer,
+  dispatchOp,
+  DATA_TRANSFER_KEYS,
+} from "./host/operations.js";
 export type {
   InsertOp,
   MoveOp,
@@ -33,4 +46,5 @@ export type {
   ContentLocation,
   DropContext,
   DataTransferLike,
+  OperationCallbacks,
 } from "./host/operations.js";

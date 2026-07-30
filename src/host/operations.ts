@@ -112,6 +112,45 @@ export interface DropContext {
   index: number;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Callback signatures                                                        */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Edit-intent callbacks, using the positional signatures named in the
+ * initiative (`onInsert(targetId, index, payload)`, `onMove(from, to)`,
+ * `onSelect(targetId, contentId?)`). These are the surface the host hook and
+ * overlays expose; the structured `InsertOp`/`MoveOp`/`SelectOp` records above
+ * are the serializable payloads carried across the SVER boundary.
+ */
+export interface OperationCallbacks {
+  /** A new block was inserted into `targetId` at `index`. */
+  onInsert?: (targetId: string, index: number, payload: InsertOp["payload"]) => void;
+  /** An existing content item was relocated. */
+  onMove?: (from: ContentLocation, to: ContentLocation) => void;
+  /** A target (or a content item within it) was selected. */
+  onSelect?: (targetId: string, contentId?: string) => void;
+}
+
+/**
+ * Dispatch a structured op (as built by {@link opFromDataTransfer}) to the
+ * matching positional callback. Keeps the op→callback fan-out in one place so
+ * the hook and overlays stay consistent.
+ */
+export function dispatchOp(
+  op: InsertOp | MoveOp | null,
+  callbacks: OperationCallbacks,
+): void {
+  if (!op) {
+    return;
+  }
+  if (op.kind === "insert") {
+    callbacks.onInsert?.(op.targetId, op.index, op.payload);
+  } else {
+    callbacks.onMove?.(op.from, op.to);
+  }
+}
+
 /**
  * Pure constructor: read a drop's `DataTransfer` and produce the correct op.
  *
