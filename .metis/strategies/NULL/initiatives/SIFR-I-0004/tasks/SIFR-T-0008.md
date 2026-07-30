@@ -4,14 +4,14 @@ level: task
 title: "Admin Shell With Iframe Embed And Host Wiring And Connection Status"
 short_code: "SIFR-T-0008"
 created_at: 2026-07-30T16:02:03.164018+00:00
-updated_at: 2026-07-30T16:02:03.164018+00:00
+updated_at: 2026-07-30T17:15:32.884495+00:00
 parent: SIFR-I-0004
 blocked_by: []
 archived: false
 
 tags:
   - "#task"
-  - "#phase/todo"
+  - "#phase/active"
 
 
 exit_criteria_met: false
@@ -28,6 +28,8 @@ initiative_id: SIFR-I-0004
 ## Objective **[REQUIRED]**
 
 Build the admin shell — the host app that embeds the demo site (SIFR-T-0007) in an iframe, mounts `useStardustHost` (from the SIFR-I-0003 host-side package), establishes the frame-link connection over an explicit localhost origin, and renders the connection lifecycle (connecting/connected/error) in the UI. This is the structural "host" half of the demo pair: it stands up the iframe, the scaled canvas, and the connection status strip that later tasks build overlays and panels onto. It replaces the entangled prototype `code_temp/Stardust-CMS-App/app/` (`IFrame.tsx` with `transform: scale(...)`, `ConnectStatus`, and the `useFrame`/overlay machinery) with a clean consumer of the extracted host package.
+
+## Acceptance Criteria
 
 ## Acceptance Criteria **[REQUIRED]**
 
@@ -80,4 +82,21 @@ Scaffold a Vite + React admin app. Render a layout with a top status strip and a
 
 ## Status Updates **[REQUIRED]**
 
-*To be added during implementation*
+### Completion notes
+
+Built the admin host shell under `demo/admin` (Vite + React 18) consuming the host package via `@stardust-cms/iframe-adapter/host`.
+
+- **Iframe embed + explicit origin:** `HostCanvas` renders `<iframe src="http://localhost:5174/">` and mounts `useStardustHost(iframeRef, { origin: SITE_ORIGIN })`. `FrameLinkProvider` `targetOrigin` = `SITE_ORIGIN` (5174), matching the hook origin. Never `*` (NFR-002).
+- **Handshake verified live:** the admin reaches `connected` against the embedded site (Playwright: status strip shows "Connected — editing live").
+- **Scaled canvas:** iframe laid out at `DESIGN_WIDTH` (1024) with `transform: scale(scale)`; the canvas container is CSS-responsive (`width:100%; max-width:1024px`) and the hook derives `scale = canvasWidth / designWidth`. Verified at a 1200px viewport: scale 0.80×, canvas 816px, iframe `scale(0.797)`, canvas height 717 = 900×0.797. The iframe is absolutely positioned so its design-width layout box doesn't stretch the responsive canvas.
+- **Status strip (ConnectStatus successor):** renders connecting / connected / error with legible labels + colored dot in the UI (never console-only). Error state renders "Connection error — is the demo site running on the expected origin?" (observed during a deliberately-broken handshake).
+- **Geometry surface:** `useStardustHost` returns `targets` mapped through `mapGeometry`; published via `HostContext` (`useHost()`) for SIFR-T-0010 overlays. The overlay layer + sidebar are wired as seams (`Editing` render-prop, empty in this task).
+
+**Two bug fixes required for a stable live handshake (folded into this commit; they touch the demo site from SIFR-T-0007, not the library):**
+1. `FrameLinkProvider` recreates/destroys its frame-link instance whenever the `options` object identity changes. Passing a fresh `{ targetOrigin }` literal per render tore the connection down every render. Fixed by hoisting `FRAME_LINK_OPTIONS` to a module constant in both apps.
+2. React `StrictMode`'s dev-only effect double-invocation (mount→unmount→mount) makes the provider `destroy()` its first instance mid-handshake, leaving a permanent error state in dev. Removed `StrictMode` from both demo entry points (documented in `main.tsx`). The adapter's own provider tests cover StrictMode-safety; the live demo runs without it so the handshake is stable to observe/record.
+
+Verification: both demo apps typecheck clean; library `tsc --noEmit` + `vitest run` (79 tests) green; connection + scaling confirmed in-browser.
+
+### TC-001: Pass — handshake reaches connected; scaled iframe visible; geometry mapped and exposed via the hook.
+### TC-002: Pass — error state renders a legible message in the status strip (not console-only).

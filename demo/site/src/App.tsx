@@ -23,11 +23,11 @@ import { FrameLinkProvider } from "frame-link-react";
 import { StardustAdapterProvider } from "@stardust-cms/iframe-adapter";
 import { SeedContent } from "./SeedContent";
 import { Page } from "./Page";
-import { ADMIN_ORIGIN } from "./config";
+import { FRAME_LINK_OPTIONS } from "./config";
 
 export function App(): ReactNode {
   return (
-    <FrameLinkProvider options={{ targetOrigin: ADMIN_ORIGIN }}>
+    <FrameLinkProvider options={FRAME_LINK_OPTIONS}>
       <StardustAdapterProvider>
         <SeedContent>
           <Page />

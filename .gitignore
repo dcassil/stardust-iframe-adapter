@@ -4,3 +4,6 @@ dist/
 .DS_Store
 metis.db
 .metis/metis.db
+.playwright-mcp/
+demo/e2e/test-results/
+demo/e2e/playwright-report/

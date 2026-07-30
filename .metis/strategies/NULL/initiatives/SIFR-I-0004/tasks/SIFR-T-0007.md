@@ -4,14 +4,14 @@ level: task
 title: "Demo Site App With Editable Targets And Nested Container"
 short_code: "SIFR-T-0007"
 created_at: 2026-07-30T16:01:59.088275+00:00
-updated_at: 2026-07-30T17:08:04.574970+00:00
+updated_at: 2026-07-30T17:15:26.376390+00:00
 parent: SIFR-I-0004
 blocked_by: []
 archived: false
 
 tags:
   - "#task"
-  - "#phase/active"
+  - "#phase/completed"
 
 
 exit_criteria_met: false
@@ -28,6 +28,8 @@ initiative_id: SIFR-I-0004
 ## Objective **[REQUIRED]**
 
 Build the demo site — the embedded page that the admin shell edits through the iframe. It is a small React app wrapped in `StardustAdapterProvider` (from the SIFR-I-0002 iframe-side package) that annotates 4–6 editable regions with `EditableTarget`, including at least one nested container target. This is the "site" half of the demo pair and the source of the geometry the host overlays track. It replaces the entangled prototype `code_temp/Stardust-CMS-App/demoApp/` (built on `CmsBaseProvider`/`CmsTarget`/`CmsContent`) with a clean consumer of the extracted package.
+
+## Acceptance Criteria
 
 ## Acceptance Criteria
 

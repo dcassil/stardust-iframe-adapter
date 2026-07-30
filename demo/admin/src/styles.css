@@ -1,0 +1,126 @@
+:root {
+  /* Small demo token set (SIFR-T-0010 NFR-004). */
+  --admin-bg: #0f172a;
+  --admin-panel-bg: #1e293b;
+  --admin-panel-fg: #e2e8f0;
+  --admin-muted: #94a3b8;
+  --admin-border: #334155;
+  --admin-accent: #6366f1;
+  --admin-accent-soft: rgba(99, 102, 241, 0.18);
+  --admin-selected: #ec4899;
+  --admin-ok: #22c55e;
+  --admin-warn: #f59e0b;
+  --admin-err: #ef4444;
+  --admin-radius: 8px;
+  --admin-gap: 16px;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--admin-bg);
+  color: var(--admin-panel-fg);
+}
+
+.admin-root {
+  min-height: 100vh;
+}
+
+/* --- Status strip -------------------------------------------------------- */
+.admin-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: var(--admin-panel-bg);
+  border-bottom: 1px solid var(--admin-border);
+  font-size: 13px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.admin-status__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--admin-muted);
+  flex: 0 0 auto;
+}
+.admin-status__dot--connecting { background: var(--admin-warn); animation: pulse 1s infinite; }
+.admin-status__dot--connected { background: var(--admin-ok); }
+.admin-status__dot--error { background: var(--admin-err); }
+.admin-status__dot--disconnected { background: var(--admin-muted); }
+
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+.admin-status__label { font-weight: 600; }
+.admin-status__spacer { flex: 1; }
+.admin-status__meta { color: var(--admin-muted); font-variant-numeric: tabular-nums; }
+
+/* --- Layout -------------------------------------------------------------- */
+.admin-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  align-items: start;
+}
+
+.admin-main {
+  min-width: 0;
+}
+
+.admin-sidebar {
+  position: sticky;
+  top: 41px;
+  height: calc(100vh - 41px);
+  overflow-y: auto;
+  border-left: 1px solid var(--admin-border);
+  background: var(--admin-panel-bg);
+  padding: var(--admin-gap);
+  display: flex;
+  flex-direction: column;
+  gap: var(--admin-gap);
+}
+
+/* --- Canvas -------------------------------------------------------------- */
+.admin-canvas-scroll {
+  padding: 32px;
+  overflow: auto;
+}
+
+.admin-canvas {
+  position: relative;
+  /* Responsive on-screen width: fills the column but never upscales past the
+     design width. `useStardustHost` reads this width to derive `scale`. */
+  width: 100%;
+  max-width: 1024px; /* == DESIGN_WIDTH */
+  overflow: hidden;
+  background: #fff;
+  border-radius: var(--admin-radius);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+}
+
+.admin-canvas__iframe {
+  /* Absolute so the untransformed (design-width) layout box does not stretch
+     the responsive canvas; the scale transform shrinks it to fit. */
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  border: 0;
+}
+
+.admin-overlay-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Overlay children re-enable pointer events (SIFR-T-0010). */
+.admin-overlay-layer > * {
+  pointer-events: auto;
+}
