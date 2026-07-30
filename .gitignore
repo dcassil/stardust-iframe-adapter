@@ -9,3 +9,7 @@ test-results/
 playwright-report/
 demo/e2e/test-results/
 demo/e2e/playwright-report/
+
+# internal orchestration + Metis planning DB (not part of the public package)
+orchestration/
+.metis/
