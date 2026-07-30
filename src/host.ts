@@ -14,3 +14,15 @@ export * from "./protocol/index.js";
 // SIFR-I-0003 — host-side overlay adapter surface.
 export { mapGeometry } from "./host/mapGeometry.js";
 export type { GeometryTransform, MappedGeometry } from "./host/mapGeometry.js";
+
+export { opFromDataTransfer, DATA_TRANSFER_KEYS } from "./host/operations.js";
+export type {
+  InsertOp,
+  MoveOp,
+  SelectOp,
+  StardustHostOp,
+  ConnectionState,
+  ContentLocation,
+  DropContext,
+  DataTransferLike,
+} from "./host/operations.js";
