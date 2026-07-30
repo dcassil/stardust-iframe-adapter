@@ -4,14 +4,14 @@ level: task
 title: "ADR: Package Boundary And Frame-Link-Over-Old-Transport Decision"
 short_code: "SIFR-T-0005"
 created_at: 2026-07-30T16:01:24.445950+00:00
-updated_at: 2026-07-30T16:22:33.226180+00:00
+updated_at: 2026-07-30T16:25:04.950112+00:00
 parent: SIFR-I-0001
 blocked_by: []
 archived: false
 
 tags:
   - "#task"
-  - "#phase/active"
+  - "#phase/completed"
 
 
 exit_criteria_met: false
@@ -28,6 +28,8 @@ initiative_id: SIFR-I-0001
 ## Objective **[REQUIRED]**
 
 Author the load-bearing Architecture Decision Record for the `@stardust-cms/iframe-adapter` package. The ADR records two intertwined decisions: (a) the package boundary — a single `@stardust-cms/iframe-adapter` package with split iframe/host entry points over one framework-agnostic protocol module — and (b) using FLINK's `frame-link`/`frame-link-react` as the transport instead of resurrecting Stardust's bespoke `usePostMessage`/`useFrame`. This record is what SIFR-I-0002/0003 and future maintainers consult to understand why the boundary is drawn where it is. It must follow Daniel's global ADR rules: full context, decision, alternatives with reasoning, consequences (positive and negative), and follow-up actions.
+
+## Acceptance Criteria
 
 ## Acceptance Criteria
 
