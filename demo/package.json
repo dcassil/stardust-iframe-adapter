@@ -14,7 +14,7 @@
     "e2e": "playwright test -c e2e/playwright.config.ts"
   },
   "dependencies": {
-    "@stardust-cms/iframe-adapter": "^0.1.0",
+    "@stardust-cms/iframe-adapter": "^0.1.1",
     "@stardust-cms/dashboard": "^0.1.0",
     "versioned-content-engine": "^0.1.1",
     "frame-link": "^4.0.0",

@@ -164,6 +164,56 @@ test.describe("dashboard host shell + VCE store", () => {
     ).toBeVisible({ timeout: 10_000 });
   });
 
+  test("drag-over surfaces the target tint + an active insertion zone at the drop index, and dropping inserts there", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/");
+    await waitConnected(page);
+    await page.waitForTimeout(500);
+
+    const introItems = targetItems(page, "intro");
+    const before = await introItems.count();
+    expect(before).toBeGreaterThan(0); // intro is non-empty → top/bottom zones
+
+    const source = page.getByTestId("palette-item-text");
+    const target = page.locator('[data-target-id="intro"]');
+    // Share one DataTransfer across the whole native HTML5 sequence so the
+    // library's enter/leave counter + zone activation observe a real drag.
+    const dt = await page.evaluateHandle(() => new DataTransfer());
+
+    await source.dispatchEvent("dragstart", { dataTransfer: dt });
+    await target.dispatchEvent("dragenter", { dataTransfer: dt });
+    await target.dispatchEvent("dragover", { dataTransfer: dt });
+
+    // (a) whole-area drag-over marker is present on the target.
+    await expect(target).toHaveAttribute("data-dragover", "");
+
+    // Activate the FIRST item's "top" zone (insertion index 0) by dispatching
+    // dragover onto that specific zone, then assert it becomes the active bar
+    // at the expected data-drop-index.
+    const topZone = page
+      .locator('[data-target-id="intro"] [data-drop-zone="top"]')
+      .first();
+    await topZone.dispatchEvent("dragover", { dataTransfer: dt });
+
+    const activeZone = page.locator(
+      '[data-target-id="intro"] [data-drop-zone][data-drop-active]',
+    );
+    await expect(activeZone).toHaveCount(1);
+    await expect(activeZone).toHaveAttribute("data-drop-zone", "top");
+    await expect(activeZone).toHaveAttribute("data-drop-index", "0");
+
+    // (b) dropping on that active zone inserts at index 0 and renders in-frame.
+    await topZone.dispatchEvent("drop", { dataTransfer: dt });
+    await source.dispatchEvent("dragend", { dataTransfer: dt });
+
+    await expect(introItems).toHaveCount(before + 1, { timeout: 10_000 });
+    await expect(introItems.first()).toHaveText("New text block", {
+      timeout: 10_000,
+    });
+  });
+
   test("publish and version navigation drive the VCE workflow", async ({
     page,
   }) => {
