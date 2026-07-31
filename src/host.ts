@@ -23,6 +23,8 @@ export type {
   MappedChild,
 } from "./host/useStardustHost.js";
 
+export { useDragActive } from "./host/useDragActive.js";
+
 export {
   TargetAreaOverlay,
   ContentItemOverlay,

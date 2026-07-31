@@ -30,15 +30,21 @@
  *    `data-drop-zone="empty"` full-area zone (→ index 0).
  *  - The zone currently under the pointer during a drag carries
  *    `data-drop-active=""`, so CSS can render the ~8px insertion bar.
- *  - Zones set `pointer-events` interactive only while a drag is over the target
- *    (`data-dragover`); when idle they let clicks fall through to the item's
- *    select hit-box and to the iframe.
+ *  - The drop area + zones set `pointer-events` interactive only while a native
+ *    drag is in progress anywhere in the document (detected by
+ *    {@link useDragActive} via document-level `dragstart`/`dragend`/`drop`, or
+ *    overridden by the `dragActive` prop); when idle they let clicks fall
+ *    through to the item's select hit-box and to the iframe. Gating on the
+ *    GLOBAL drag flag — not the target's own `onDragEnter` — is essential:
+ *    `dragenter` can never fire on a `pointer-events:none` element, so the
+ *    prototype-style global flag is the only reliable trigger.
  */
 
 import { useCallback, useRef, useState } from "react";
 import type { CSSProperties, DragEvent, MouseEvent, ReactElement } from "react";
 import type { MappedChild, MappedTarget } from "./useStardustHost.js";
 import type { MappedGeometry } from "./mapGeometry.js";
+import { useDragActive } from "./useDragActive.js";
 import {
   DATA_TRANSFER_KEYS,
   dispatchOp,
@@ -189,6 +195,15 @@ export interface TargetAreaOverlayProps extends OperationCallbacks {
    * `empty`). The active zone additionally carries `data-drop-active`.
    */
   zoneClassName?: string;
+  /**
+   * When set, OVERRIDES the built-in native-drag detector that decides whether
+   * the drop area + zones are interactive (`pointer-events: auto`) so that a
+   * real HTML5 drag can reach them. Defaults to the auto-detected value from
+   * {@link useDragActive} (document-level `dragstart`/`dragend`/`drop`), which
+   * makes the overlay work with no consumer wiring. Pass a boolean to drive it
+   * yourself (e.g. from a palette drag flag).
+   */
+  dragActive?: boolean;
 }
 
 /**
@@ -208,7 +223,12 @@ export function TargetAreaOverlay({
   itemClassName,
   itemStyle,
   zoneClassName,
+  dragActive: dragActiveProp,
 }: TargetAreaOverlayProps): ReactElement {
+  // Auto-detect a native drag anywhere in the document; a consumer may override.
+  const autoDragActive = useDragActive();
+  const dragActive = dragActiveProp ?? autoDragActive;
+
   const callbacks: OperationCallbacks = {
     ...(onInsert ? { onInsert } : {}),
     ...(onMove ? { onMove } : {}),
@@ -306,10 +326,14 @@ export function TargetAreaOverlay({
     activeZone.index === zone.index &&
     activeZone.edge === zone.edge;
 
-  // Zones only capture pointer events while a drag is over the target; when
-  // idle they must not block selection clicks or the iframe underneath.
-  const zonePointerEvents: CSSProperties["pointerEvents"] = dragOver
-    ? "all"
+  // The drop area + zones capture pointer events while a native drag is active
+  // (so `dragenter`/`dragover`/`drop` actually reach them and toggle
+  // `data-dragover`/`data-drop-active`); when idle they are non-interactive so
+  // selection clicks and the iframe underneath stay usable. Gating on the
+  // GLOBAL drag flag (not the deadlock-prone per-target `onDragEnter`) is the
+  // fix: `dragenter` can never fire on a `pointer-events:none` element.
+  const dropPointerEvents: CSSProperties["pointerEvents"] = dragActive
+    ? "auto"
     : "none";
 
   // Guarantee a grabbable drop area even for short/empty targets, without
@@ -328,8 +352,10 @@ export function TargetAreaOverlay({
       className={className}
       style={{
         ...positionStyle(target.geometry),
-        // Container stays non-interactive; zones opt back in while dragging.
-        pointerEvents: "none",
+        // Idle: container is non-interactive so clicks reach items/iframe.
+        // During a drag: it becomes interactive so drag events reach the drop
+        // area + zones inside it (the drop area re-clamps the hit region).
+        pointerEvents: dragActive ? "auto" : "none",
         ...style,
       }}
     >
@@ -342,7 +368,7 @@ export function TargetAreaOverlay({
           left: 0,
           width: "100%",
           height: dropAreaHeight,
-          pointerEvents: "none",
+          pointerEvents: dropPointerEvents,
         }}
       >
         {hasChildren ? (
@@ -375,7 +401,7 @@ export function TargetAreaOverlay({
                     width: "100%",
                     top,
                     height: halfway,
-                    pointerEvents: zonePointerEvents,
+                    pointerEvents: dropPointerEvents,
                   }}
                 />
                 <div
@@ -393,7 +419,7 @@ export function TargetAreaOverlay({
                     width: "100%",
                     top: top + halfway,
                     height: height - halfway,
-                    pointerEvents: zonePointerEvents,
+                    pointerEvents: dropPointerEvents,
                   }}
                 />
               </div>
@@ -415,7 +441,7 @@ export function TargetAreaOverlay({
               left: 0,
               width: "100%",
               height: "100%",
-              pointerEvents: zonePointerEvents,
+              pointerEvents: dropPointerEvents,
             }}
           />
         )}
@@ -428,7 +454,7 @@ export function TargetAreaOverlay({
               targetId={target.targetId}
               child={child}
               index={child.index}
-              dragActive={dragOver}
+              dragActive={dragActive}
               {...callbacks}
               {...(itemClassName !== undefined ? { className: itemClassName } : {})}
               {...(itemStyle !== undefined ? { style: itemStyle } : {})}
