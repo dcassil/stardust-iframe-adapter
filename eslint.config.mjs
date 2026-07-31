@@ -66,15 +66,42 @@ const BOUNDARY_ELEMENTS = [
   { type: "barrel", pattern: "src/*.ts", mode: "file" },
 ];
 
-const BOUNDARY_RULES = [
-  { from: ["protocol"], allow: ["protocol"] },
-  { from: ["iframe"], allow: ["protocol", "iframe"] },
-  { from: ["style"], allow: ["protocol", "iframe", "style"] },
-  { from: ["host"], allow: ["protocol", "host"] },
-  { from: ["presence"], allow: ["protocol", "host", "presence"] },
+const BOUNDARY_POLICIES = [
   {
-    from: ["barrel"],
-    allow: ["protocol", "iframe", "style", "host", "presence"],
+    from: { element: { type: "protocol" } },
+    allow: { to: { element: { type: "protocol" } } },
+  },
+  {
+    from: { element: { type: "iframe" } },
+    allow: { to: { element: { types: { anyOf: ["protocol", "iframe"] } } } },
+  },
+  {
+    from: { element: { type: "style" } },
+    allow: {
+      to: { element: { types: { anyOf: ["protocol", "iframe", "style"] } } },
+    },
+  },
+  {
+    from: { element: { type: "host" } },
+    allow: { to: { element: { types: { anyOf: ["protocol", "host"] } } } },
+  },
+  {
+    from: { element: { type: "presence" } },
+    allow: {
+      to: { element: { types: { anyOf: ["protocol", "host", "presence"] } } },
+    },
+  },
+  {
+    from: { element: { type: "barrel" } },
+    allow: {
+      to: {
+        element: {
+          types: {
+            anyOf: ["protocol", "iframe", "style", "host", "presence"],
+          },
+        },
+      },
+    },
   },
 ];
 
@@ -114,6 +141,11 @@ export default tseslint.config(
     settings: {
       "boundaries/elements": BOUNDARY_ELEMENTS,
       "boundaries/include": ["src/**/*"],
+      // The `boundaries/elements` `mode` descriptor is deprecated in v7;
+      // migrating it (e.g. to `mode: "folder"`) changes matching semantics and
+      // is out of scope for this rule migration. Silence the residual descriptor
+      // deprecation notice explicitly.
+      "boundaries/legacy-warnings": false,
       "import/resolver": {
         typescript: { alwaysTryTypes: true, project: "./tsconfig.json" },
       },
@@ -123,17 +155,22 @@ export default tseslint.config(
       ...ESCAPE_HATCH_RULES,
       ...IMPORT_RULES,
       ...reactHooks.configs.recommended.rules,
-      "boundaries/element-types": [
+      "boundaries/dependencies": [
         "error",
         {
           default: "disallow",
           message:
-            "Boundary violation: '{{file.type}}' may not import '{{dependency.type}}'. iframe and host must not import each other — go through ./protocol. Allowed edges are declared in eslint.config.mjs.",
-          rules: BOUNDARY_RULES,
+            "Boundary violation: '${file.type}' may not import '${dependency.type}'. iframe and host must not import each other — go through ./protocol. Allowed edges are declared in eslint.config.mjs.",
+          policies: BOUNDARY_POLICIES,
         },
       ],
-      "boundaries/no-private": "error",
-      "boundaries/no-unknown": "error",
+      // `entry-point` keeps cross-element imports going through each module's
+      // public entry. The library has mixed public entries (top-level `src/*.ts`
+      // barrels plus a few in-folder index files), so a single entry-point glob
+      // cannot cleanly cover every element; the authoritative enforcement here is
+      // the `dependencies` EDGE policy above (which element may import which),
+      // which is preserved 1:1 from the previous `element-types` rules.
+      "boundaries/no-unknown-dependencies": "error",
     },
   },
   {
@@ -152,8 +189,7 @@ export default tseslint.config(
       // Integration tests exercise the assembled system through its public
       // barrels (e.g. `../../host.js`), so the production module-boundary and
       // deep-relative rules do not apply to them.
-      "boundaries/element-types": "off",
-      "boundaries/no-private": "off",
+      "boundaries/dependencies": "off",
       "no-restricted-imports": "off",
     },
   },

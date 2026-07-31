@@ -55,18 +55,36 @@ const IMPORT_RULES = {
   ],
 };
 
+// Patterns are relative to this config's directory (`demo/`), which is the
+// eslint root when the demo is linted (`eslint .` from `demo/`). They must NOT
+// carry a `demo/` prefix or they never match the actual file paths (`site/...`)
+// and the boundaries rule silently becomes a no-op.
 const BOUNDARY_ELEMENTS = [
-  { type: "shared", pattern: "demo/shared/**", mode: "file" },
-  { type: "site", pattern: "demo/site/**", mode: "file" },
-  { type: "admin", pattern: "demo/admin/**", mode: "file" },
-  { type: "e2e", pattern: "demo/e2e/**", mode: "file" },
+  { type: "shared", pattern: "shared/**", mode: "file" },
+  { type: "site", pattern: "site/**", mode: "file" },
+  { type: "admin", pattern: "admin/**", mode: "file" },
+  { type: "e2e", pattern: "e2e/**", mode: "file" },
 ];
 
-const BOUNDARY_RULES = [
-  { from: ["shared"], allow: ["shared"] },
-  { from: ["site"], allow: ["site", "shared"] },
-  { from: ["admin"], allow: ["admin", "shared"] },
-  { from: ["e2e"], allow: ["e2e", "shared", "site", "admin"] },
+const BOUNDARY_POLICIES = [
+  {
+    from: { element: { type: "shared" } },
+    allow: { to: { element: { type: "shared" } } },
+  },
+  {
+    from: { element: { type: "site" } },
+    allow: { to: { element: { types: { anyOf: ["site", "shared"] } } } },
+  },
+  {
+    from: { element: { type: "admin" } },
+    allow: { to: { element: { types: { anyOf: ["admin", "shared"] } } } },
+  },
+  {
+    from: { element: { type: "e2e" } },
+    allow: {
+      to: { element: { types: { anyOf: ["e2e", "shared", "site", "admin"] } } },
+    },
+  },
 ];
 
 const typeAwareRules = {
@@ -74,17 +92,22 @@ const typeAwareRules = {
   ...ESCAPE_HATCH_RULES,
   ...IMPORT_RULES,
   ...reactHooks.configs.recommended.rules,
-  "boundaries/element-types": [
+  "boundaries/dependencies": [
     "error",
     {
       default: "disallow",
       message:
-        "Boundary violation: '{{file.type}}' may not import '{{dependency.type}}'. site and admin must not import each other; both go through @demo/shared. Allowed edges are declared in demo/eslint.config.mjs.",
-      rules: BOUNDARY_RULES,
+        "Boundary violation: '${file.type}' may not import '${dependency.type}'. site and admin must not import each other; both go through @demo/shared. Allowed edges are declared in demo/eslint.config.mjs.",
+      policies: BOUNDARY_POLICIES,
     },
   ],
-  "boundaries/no-private": "error",
-  "boundaries/no-unknown": "error",
+  // The demo's cross-element imports go through subpath aliases
+  // (`@demo/shared/store`, `@demo/shared/content-model`) rather than a single
+  // element-root `index.ts`, so a uniform `entry-point` glob does not apply.
+  // The authoritative enforcement is the `dependencies` EDGE policy above
+  // (site never imports admin, and vice-versa; both may import shared),
+  // preserved 1:1 from the previous `element-types` rules.
+  "boundaries/no-unknown-dependencies": "error",
 };
 
 /** Build a type-aware block for one demo sub-project's tsconfig. */
@@ -106,7 +129,11 @@ function projectBlock(files, project) {
     },
     settings: {
       "boundaries/elements": BOUNDARY_ELEMENTS,
-      "boundaries/include": ["demo/**/*"],
+      "boundaries/include": ["**/*"],
+      // The `boundaries/elements` `mode` descriptor is deprecated in v7;
+      // migrating it changes matching semantics and is out of scope for this
+      // rule migration. Silence the residual descriptor deprecation notice.
+      "boundaries/legacy-warnings": false,
       "import/resolver": {
         typescript: { alwaysTryTypes: true, project },
       },
@@ -148,7 +175,7 @@ export default tseslint.config(
       "max-lines-per-function": "off",
       "@typescript-eslint/no-non-null-assertion": "off",
       "max-nested-callbacks": "off",
-      "boundaries/element-types": "off",
+      "boundaries/dependencies": "off",
       "no-restricted-imports": "off",
     },
   },
