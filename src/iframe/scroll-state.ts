@@ -8,7 +8,7 @@
  * wire-compatibility with the prototype (see the protocol docs).
  */
 
-import type { ScrollState } from "../protocol/index.js";
+import type { ScrollState } from "../protocol/registry.js";
 
 /** Read the current window scroll state as a serializable {@link ScrollState}. */
 export function readScrollState(win: Window = window): ScrollState {

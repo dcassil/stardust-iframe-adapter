@@ -16,7 +16,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties, ReactElement } from "react";
 import { mapGeometry, type GeometryTransform } from "../host/mapGeometry.js";
-import type { Geometry } from "../protocol/index.js";
+import type { Geometry } from "../protocol/registry.js";
 import type {
   Participant,
   PresenceProvider,

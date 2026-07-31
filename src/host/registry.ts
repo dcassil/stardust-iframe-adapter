@@ -10,7 +10,7 @@
  */
 
 import type { MessageDefinition as FlMessageDefinition } from "frame-link";
-import type { StardustMessageRegistry } from "../protocol/index.js";
+import type { StardustMessageRegistry } from "../protocol/registry.js";
 
 /**
  * The Stardust protocol expressed as a frame-link `MessageRegistry`: each key's

@@ -12,7 +12,7 @@ export const SITE_ORIGIN: string =
   "http://localhost:5174";
 
 /** Full URL loaded into the preview iframe. */
-export const SITE_URL: string = `${SITE_ORIGIN}/`;
+export const SITE_URL = `${SITE_ORIGIN}/`;
 
 /**
  * Stable frame-link options for the host `FrameLinkProvider`.

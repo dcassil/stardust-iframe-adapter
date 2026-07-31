@@ -5,4 +5,4 @@
  * `./host` or `./iframe`; import this subpath explicitly to add remote cursors
  * and advisory edit-locks. The default adapter has no third-party runtime dep.
  */
-export * from "./presence/index.js";
+export * from "./presence/barrel.js";

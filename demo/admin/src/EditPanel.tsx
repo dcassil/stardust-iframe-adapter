@@ -29,7 +29,8 @@ export function EditPanel({
   selectedTargetId,
   selectedContentId,
 }: EditPanelProps): ReactNode {
-  const { snapshot, apply } = useContentStore();
+  const store = useContentStore();
+  const { snapshot } = store;
 
   const selected = useMemo(() => {
     if (!selectedTargetId || !selectedContentId) return undefined;
@@ -51,7 +52,7 @@ export function EditPanel({
   const blockType = findBlockType(blockTypes, content.type);
 
   const onEdit = (patch: BlockFieldPatch): void => {
-    apply({
+    store.apply({
       kind: "edit",
       targetId: selected.targetId,
       contentId: selected.contentId,
@@ -81,7 +82,9 @@ export function EditPanel({
             rows={4}
             data-testid="panel-default-field"
             value={content.value ?? ""}
-            onChange={(e) => onEdit({ value: e.target.value })}
+            onChange={(e) => {
+              onEdit({ value: e.target.value });
+            }}
           />
         </label>
       )}

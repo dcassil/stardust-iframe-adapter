@@ -9,7 +9,7 @@ import {
 } from "vitest";
 import { render, cleanup, act } from "@testing-library/react";
 import { usePositionPublishing } from "./usePositionPublishing.js";
-import type { ContentTarget, ScrollState } from "../protocol/index.js";
+import type { ContentTarget, ScrollState } from "../protocol/registry.js";
 
 /* -------------------------------------------------------------------------- */
 /* Observer mocks (jsdom has neither ResizeObserver nor a spy-able instance)   */
@@ -35,7 +35,7 @@ function flushRaf(): void {
   const cbs = rafCbs;
   rafCbs = [];
   act(() => {
-    cbs.forEach((cb) => cb(0));
+    cbs.forEach((cb) => { cb(0); });
   });
 }
 
@@ -143,7 +143,7 @@ describe("usePositionPublishing", () => {
         window.dispatchEvent(new Event("resize"));
       }
       // Also fire observer callbacks in the same frame.
-      MockObserver.instances.forEach((o) => o.callback());
+      MockObserver.instances.forEach((o) => { o.callback(); });
     });
 
     // Nothing extra published until the frame runs.

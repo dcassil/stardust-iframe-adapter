@@ -25,7 +25,9 @@ const textBlock: BlockType<"text"> = {
         rows={4}
         data-testid="panel-text"
         value={content.value ?? ""}
-        onChange={(e) => onEdit({ value: e.target.value })}
+        onChange={(e) => {
+          onEdit({ value: e.target.value });
+        }}
       />
     </label>
   ),
@@ -42,7 +44,9 @@ const imageBlock: BlockType<"image"> = {
         type="text"
         data-testid="panel-image"
         value={content.value ?? ""}
-        onChange={(e) => onEdit({ value: e.target.value })}
+        onChange={(e) => {
+          onEdit({ value: e.target.value });
+        }}
       />
     </label>
   ),

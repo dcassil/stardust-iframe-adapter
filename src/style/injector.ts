@@ -122,8 +122,11 @@ export function discoverStyleElements(
     record(el);
   }
 
-  return [...rulesByGroup.keys()].sort().map((group) => ({
-    group,
-    rules: [...rulesByGroup.get(group)!].sort(),
-  }));
+  const groups: DiscoveredStyleGroup[] = [];
+  for (const group of [...rulesByGroup.keys()].sort()) {
+    const rules = rulesByGroup.get(group);
+    if (rules === undefined) continue;
+    groups.push({ group, rules: [...rules].sort() });
+  }
+  return groups;
 }

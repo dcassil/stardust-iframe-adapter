@@ -12,13 +12,12 @@ import {
   useHandler as useHandlerGeneric,
   useSend as useSendGeneric,
 } from "frame-link-react";
-import type { MessageHandler } from "frame-link";
 import type {
   RequestOf,
   ResponseOf,
   StardustMessageKey,
   StardustMessageRegistry,
-} from "../protocol/index.js";
+} from "../protocol/registry.js";
 
 /**
  * The Stardust registry satisfies frame-link's `MessageRegistry` shape: its
@@ -38,10 +37,7 @@ export function useStardustHandler<K extends StardustMessageKey>(
   key: K,
   handler: (request: RequestOf<K>) => ResponseOf<K> | Promise<ResponseOf<K>>
 ): void {
-  useHandlerGeneric<StardustFrameLinkRegistry, K>(
-    key,
-    handler as MessageHandler<StardustFrameLinkRegistry, K>
-  );
+  useHandlerGeneric<StardustFrameLinkRegistry, K>(key, handler);
 }
 
 /** Create a type-safe sender for a Stardust message key. */

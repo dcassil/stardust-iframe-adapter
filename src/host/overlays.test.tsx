@@ -272,7 +272,7 @@ describe("TargetAreaOverlay — drop zones + drag-over (0.1.1)", () => {
     );
     const box = container.querySelector<HTMLDivElement>('[data-target-id="t1"]')!;
     // Idle: zones are pointer-events:none so a box click still selects.
-    const zone = container.querySelector('[data-drop-zone="top"]') as HTMLElement;
+    const zone = container.querySelector<HTMLElement>('[data-drop-zone="top"]')!;
     expect(zone.style.pointerEvents).toBe("none");
 
     fireEvent.click(box);

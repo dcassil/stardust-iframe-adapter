@@ -1,0 +1,9 @@
+set -e
+
+# Lint only staged files across BOTH projects (library src/** + demo/**).
+npx lint-staged
+
+# Type-check both projects in full (fast; catches cross-file type breaks that
+# per-file linting cannot).
+npm run typecheck
+npm run demo:typecheck

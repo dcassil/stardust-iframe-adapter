@@ -3,7 +3,7 @@ import { render, cleanup } from "@testing-library/react";
 import { StardustAdapterProvider } from "./StardustAdapterProvider.js";
 import { createMockPeer } from "./testing/mock-peer.js";
 import { CHANNELS } from "./frameLink.js";
-import type { ContentTarget } from "../protocol/index.js";
+import type { ContentTarget } from "../protocol/registry.js";
 
 afterEach(() => {
   cleanup();
@@ -24,7 +24,7 @@ function stubRect(el: HTMLElement): void {
       toJSON() {
         return this;
       },
-    }) as DOMRect;
+    });
 }
 
 describe("StardustAdapterProvider", () => {

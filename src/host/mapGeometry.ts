@@ -27,7 +27,7 @@
  * (SIFR-T-0018) folded into `scrollOffset`, not baked into this transform.
  */
 
-import type { Geometry } from "../protocol/index.js";
+import type { Geometry } from "../protocol/registry.js";
 
 /**
  * The scale + scroll transform applied to a `Geometry`.

@@ -240,22 +240,22 @@ export interface StardustMessageRegistry {
   "cms/requestTargetPositions": MessageDefinition<void, ContentTarget[]>;
 
   /** host → iframe. Host pushes content to render into targets. */
-  "cms/sendElements": MessageDefinition<ContentPayload, void>;
+  "cms/sendElements": MessageDefinition<ContentPayload>;
 
   /** iframe → host. Iframe publishes current target/content geometry. */
-  "cms/sendElementPositions": MessageDefinition<ContentTarget[], void>;
+  "cms/sendElementPositions": MessageDefinition<ContentTarget[]>;
 
   /** iframe → host. Iframe publishes current scroll state. */
-  "cms/sendScrollPositions": MessageDefinition<ScrollState, void>;
+  "cms/sendScrollPositions": MessageDefinition<ScrollState>;
 
   /** host → iframe. Reserved for SIFR-I-0005 (style rules). */
-  "cms/updateStyles": MessageDefinition<StyleUpdatePayload, void>;
+  "cms/updateStyles": MessageDefinition<StyleUpdatePayload>;
 
   /**
    * RESERVED — owned by SIFR-I-0006 (presence). Declared for registry
    * stability; this module defines no runtime handler behavior for it.
    */
-  "cms/presence": MessageDefinition<PresencePayload, void>;
+  "cms/presence": MessageDefinition<PresencePayload>;
 }
 
 /** Every valid message key. */

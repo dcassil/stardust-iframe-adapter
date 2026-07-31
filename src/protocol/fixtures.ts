@@ -13,7 +13,7 @@ import type {
   ResponseOf,
   ScrollState,
   StyleUpdatePayload,
-} from "./index.js";
+} from "./registry.js";
 
 export const geometryFixture: Geometry = {
   top: 10,

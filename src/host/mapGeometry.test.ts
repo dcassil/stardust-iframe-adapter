@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Geometry } from "../protocol/index.js";
+import type { Geometry } from "../protocol/registry.js";
 import { mapGeometry } from "./mapGeometry.js";
 
 /**

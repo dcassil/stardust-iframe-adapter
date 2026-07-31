@@ -54,7 +54,9 @@ export function usePresenceSession(
   useEffect(() => {
     if (!provider) return;
     provider.connect();
-    return () => provider.disconnect();
+    return () => {
+      provider.disconnect();
+    };
   }, [provider]);
 
   return provider;

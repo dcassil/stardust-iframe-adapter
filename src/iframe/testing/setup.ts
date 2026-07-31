@@ -15,9 +15,9 @@
  * own controllable mocks over these via `vi.stubGlobal`.
  */
 class InertObserver {
-  observe(): void {}
-  unobserve(): void {}
-  disconnect(): void {}
+  observe = (): void => undefined;
+  unobserve = (): void => undefined;
+  disconnect = (): void => undefined;
   takeRecords(): [] {
     return [];
   }

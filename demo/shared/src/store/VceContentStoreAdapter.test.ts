@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { createDemoContentStore, VceContentStoreAdapter } from "./index.js";
+import { createDemoContentStore, VceContentStoreAdapter } from ".";
 import { SEED_CONTENT } from "../content-model.js";
 
 describe("VceContentStoreAdapter", () => {

@@ -16,7 +16,7 @@
  */
 
 import { useEffect, useRef } from "react";
-import type { ContentTarget, ScrollState } from "../protocol/index.js";
+import type { ContentTarget, ScrollState } from "../protocol/registry.js";
 import { discoverTargets } from "./discovery.js";
 import { readScrollState } from "./scroll-state.js";
 import { rafThrottle } from "./raf-throttle.js";
@@ -71,18 +71,26 @@ export function usePositionPublishing(
     const throttledPublish = rafThrottle(publish, rafFn, cafFn);
 
     /* --- Stable listener references ------------------------------------ */
-    const onScroll = (): void => throttledPublish();
-    const onResize = (): void => throttledPublish();
+    const onScroll = (): void => {
+      throttledPublish();
+    };
+    const onResize = (): void => {
+      throttledPublish();
+    };
 
     win.addEventListener("scroll", onScroll, true);
     win.addEventListener("resize", onResize);
 
     /* --- Observers ----------------------------------------------------- */
-    const resizeObserver = new ResizeObserver(() => throttledPublish());
+    const resizeObserver = new ResizeObserver(() => {
+      throttledPublish();
+    });
     const observed = resolveObservedElement(root);
     if (observed) resizeObserver.observe(observed);
 
-    const mutationObserver = new MutationObserver(() => throttledPublish());
+    const mutationObserver = new MutationObserver(() => {
+      throttledPublish();
+    });
     const mutationTarget = observed ?? win.document.body;
     mutationObserver.observe(mutationTarget, {
       subtree: true,

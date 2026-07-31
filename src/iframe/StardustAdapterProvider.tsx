@@ -27,7 +27,7 @@ import {
   type ReactNode,
 } from "react";
 import { useConnection } from "frame-link-react";
-import type { ContentTarget } from "../protocol/index.js";
+import type { ContentTarget } from "../protocol/registry.js";
 import { discoverTargets } from "./discovery.js";
 import {
   mergeContent,

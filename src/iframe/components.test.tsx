@@ -8,7 +8,7 @@ import { discoverTargets } from "./discovery.js";
 import type {
   CmsContent,
   ContentPayload,
-} from "../protocol/index.js";
+} from "../protocol/registry.js";
 
 afterEach(() => {
   cleanup();

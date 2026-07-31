@@ -15,8 +15,6 @@ import { test, expect, type Page } from "@playwright/test";
  * fails loudly rather than silently passing, so it can't rot into a no-op.
  */
 
-const SITE_FRAME = 'iframe[title="Embedded site preview"]';
-
 async function waitConnected(page: Page): Promise<void> {
   await expect(page.locator(".admin-status")).toHaveAttribute(
     "data-state",

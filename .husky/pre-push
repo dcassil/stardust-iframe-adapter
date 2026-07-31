@@ -1,0 +1,8 @@
+set -e
+
+# Full test suites + dependency-boundary checks for BOTH projects.
+npm test
+npm run depcruise
+
+npm --prefix demo run test
+npm run demo:depcruise

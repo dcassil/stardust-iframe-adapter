@@ -16,7 +16,7 @@ function makeFakeRaf() {
   const flush = (): void => {
     const cbs = [...queue.values()];
     queue.clear();
-    cbs.forEach((cb) => cb(performance.now()));
+    cbs.forEach((cb) => { cb(performance.now()); });
   };
   return { raf, caf, flush, pending: (): number => queue.size };
 }

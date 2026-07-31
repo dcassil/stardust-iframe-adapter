@@ -53,7 +53,7 @@ import type {
   ContentSnapshot,
   HostContentOp,
 } from "@stardust-cms/dashboard";
-import type { CmsContent, ContentPayload } from "@stardust-cms/iframe-adapter/protocol";
+import type { CmsContent } from "@stardust-cms/iframe-adapter/protocol";
 import {
   createContent,
   updateContent,
@@ -65,51 +65,21 @@ import {
   materialize,
   createDefaultIdStrategy,
   createDefaultVersionClock,
-  type ContentState,
-  type ContentSnapshot as VceSnapshot,
-  type ContentRecord,
   type OperationDeps,
   type VersionClock,
-  type TargetId,
-  type ContentCollectionId,
-  type Id,
   type Version,
 } from "versioned-content-engine";
 import type { SeedItem } from "../content-model.js";
-
-/**
- * The demo's content-type map for the engine. Every demo block stores its full
- * {@link CmsContent} as the VCE record payload — so projecting back is a direct
- * copy and the `content.id` can be stamped with the collection id. Keys mirror
- * the demo's `CmsContent.type` discriminants.
- */
-interface DemoContentTypeMap {
-  text: CmsContent;
-  image: CmsContent;
-  container: CmsContent;
-}
-
-type DemoState = ContentState<DemoContentTypeMap>;
-type DemoRecord = ContentRecord<DemoContentTypeMap>;
-
-/** Sanctioned boundary casts to the engine's opaque branded id types. */
-const asTargetId = (id: string): TargetId => id as unknown as TargetId;
-const asCollectionId = (id: string): ContentCollectionId =>
-  id as unknown as ContentCollectionId;
-const asId = (id: string): Id => id as unknown as Id;
-
-/**
- * An id strategy that mints a fixed `collectionId` (the seed item's original
- * `content.id`) and a derived record `id`, so a seeded collection keeps its
- * original stable identity. Used only during seeding — see the constructor note.
- */
-function fixedIdStrategy(collectionId: string): OperationDeps["idStrategy"] {
-  let n = 0;
-  return {
-    newCollectionId: () => asCollectionId(collectionId),
-    newId: () => asId(`${collectionId}#${n++}`),
-  };
-}
+import {
+  asCollectionId,
+  asTargetId,
+  fixedIdStrategy,
+  insertPayloadToContent,
+  project,
+  type DemoContentTypeMap,
+  type DemoRecord,
+  type DemoState,
+} from "./VceContentStoreAdapter.helpers.js";
 
 export class VceContentStoreAdapter implements ContentStoreAdapter {
   #state: DemoState;
@@ -299,46 +269,4 @@ export class VceContentStoreAdapter implements ContentStoreAdapter {
     const records = snap.get(asTargetId(targetId));
     return records?.find((r) => String(r.collectionId) === collectionId);
   }
-}
-
-/**
- * Build a `CmsContent` from an `InsertOp.payload`. The payload always carries a
- * `type`; the shell has already merged the block's `defaultValue()` in, so any
- * `value` / `styleGroup` / `column` present are copied through. `id` is left to be
- * stamped from the minted collection id at projection time.
- */
-function insertPayloadToContent(payload: {
-  type: string;
-  [key: string]: unknown;
-}): CmsContent {
-  const content: CmsContent = {
-    id: "",
-    type: payload.type as CmsContent["type"],
-  };
-  if (typeof payload.value === "string") content.value = payload.value;
-  if (typeof payload.styleGroup === "string") content.styleGroup = payload.styleGroup;
-  if (typeof payload.column === "boolean") content.column = payload.column;
-  return content;
-}
-
-/**
- * Project a VCE snapshot to ordered dashboard `ContentPayload[]`. One payload per
- * record; `contentId` and `content.id` are the record's `collectionId` (the
- * identity the editor addresses). Fresh array + fresh objects each call.
- */
-function project(snapshot: VceSnapshot<DemoContentTypeMap>): ContentSnapshot {
-  const payloads: ContentPayload[] = [];
-  for (const [targetId, records] of snapshot) {
-    for (const record of records) {
-      const collectionId = String(record.collectionId);
-      const content: CmsContent = { ...record.payload, id: collectionId };
-      payloads.push({
-        targetId: String(targetId),
-        contentId: collectionId,
-        index: record.index,
-        content,
-      });
-    }
-  }
-  return payloads;
 }

@@ -11,7 +11,7 @@
  */
 
 import { createContext } from "react";
-import type { ContentPayload } from "../protocol/index.js";
+import type { ContentPayload } from "../protocol/registry.js";
 
 /** Content items grouped by their `targetId`, each list ordered by `index`. */
 export type ContentByTarget = Readonly<Record<string, readonly ContentPayload[]>>;

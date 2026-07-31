@@ -12,7 +12,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { MESSAGE_KEYS } from "../index.js";
+import { MESSAGE_KEYS } from "../registry.js";
 import {
   childContentFixture,
   contentPayloadFixture,

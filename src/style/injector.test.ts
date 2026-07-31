@@ -74,7 +74,7 @@ describe("clearStyles", () => {
   });
 
   it("is safe when no adapter node exists", () => {
-    expect(() => clearStyles()).not.toThrow();
+    expect(() => { clearStyles(); }).not.toThrow();
   });
 });
 

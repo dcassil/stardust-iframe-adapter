@@ -116,9 +116,13 @@ export interface SocketIoPresenceProviderOptions {
 const defaultClock: PresenceClock = {
   now: () => Date.now(),
   setTimeout: (fn, ms) => setTimeout(fn, ms) as unknown as number,
-  clearTimeout: (h) => clearTimeout(h),
+  clearTimeout: (h) => {
+    clearTimeout(h);
+  },
   setInterval: (fn, ms) => setInterval(fn, ms) as unknown as number,
-  clearInterval: (h) => clearInterval(h),
+  clearInterval: (h) => {
+    clearInterval(h);
+  },
 };
 
 /* -------------------------------------------------------------------------- */

@@ -35,7 +35,8 @@ import type { VceContentStoreAdapter } from "@demo/shared/store";
 const REINJECT_TARGET = "hero";
 
 export function VersionControls(): ReactNode {
-  const { store, apply } = useContentStore();
+  const contentStore = useContentStore();
+  const { store } = contentStore;
   const vce = store as VceContentStoreAdapter;
   const [, force] = useState(0);
 
@@ -46,9 +47,9 @@ export function VersionControls(): ReactNode {
   // adapter's `apply`), so the pinned version survives. `force` re-renders this
   // control so its state readouts (live/viewing) refresh.
   const reinject = useCallback(() => {
-    apply({ kind: "select", targetId: REINJECT_TARGET });
+    contentStore.apply({ kind: "select", targetId: REINJECT_TARGET });
     force((n) => n + 1);
-  }, [apply]);
+  }, [contentStore]);
 
   const live = vce.liveVersion();
   const viewing = vce.viewVersion();
@@ -86,7 +87,7 @@ export function VersionControls(): ReactNode {
     <section className="version-controls" data-testid="version-controls">
       <h2 className="panel__title">Versioning</h2>
       <p className="version-controls__state" data-testid="version-state">
-        {editing ? "Editing draft" : `Viewing version ${viewing}`}
+        {editing ? "Editing draft" : `Viewing version ${String(viewing)}`}
         {" · "}live v{live}
       </p>
       <div className="version-controls__row">

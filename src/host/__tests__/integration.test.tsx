@@ -159,7 +159,7 @@ describe("host integration against a mock frame-link peer", () => {
       const box = container.querySelector<HTMLDivElement>(
         `[data-target-id="${FIXTURE[0]!.targetId}"]`,
       )!;
-      expect(box.style.top).toBe(`${first.top}px`);
+      expect(box.style.top).toBe(`${String(first.top)}px`);
     });
 
     for (const fixture of FIXTURE) {
@@ -167,10 +167,10 @@ describe("host integration against a mock frame-link peer", () => {
       const box = container.querySelector<HTMLDivElement>(
         `[data-target-id="${fixture.targetId}"]`,
       )!;
-      expect(box.style.top).toBe(`${expected.top}px`);
-      expect(box.style.left).toBe(`${expected.left}px`);
-      expect(box.style.width).toBe(`${expected.width}px`);
-      expect(box.style.height).toBe(`${expected.height}px`);
+      expect(box.style.top).toBe(`${String(expected.top)}px`);
+      expect(box.style.left).toBe(`${String(expected.left)}px`);
+      expect(box.style.width).toBe(`${String(expected.width)}px`);
+      expect(box.style.height).toBe(`${String(expected.height)}px`);
     }
   });
 

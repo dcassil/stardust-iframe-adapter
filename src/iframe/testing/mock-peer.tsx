@@ -30,7 +30,7 @@ export interface MockPeer {
   /** Whether a handler is currently registered for `key`. */
   hasHandler: (key: string) => boolean;
   /** Payloads sent outbound via `send()`, in order, tagged by key. */
-  readonly sent: ReadonlyArray<{ key: string; payload: unknown }>;
+  readonly sent: readonly { key: string; payload: unknown }[];
 }
 
 interface MockController extends MockPeer {
@@ -48,7 +48,7 @@ export function createMockPeer(): {
   Provider: (props: { children: ReactNode }) => ReactNode;
 } {
   const handlers = new Map<string, AnyHandler>();
-  const sent: Array<{ key: string; payload: unknown }> = [];
+  const sent: { key: string; payload: unknown }[] = [];
 
   let setConnectedState: ((v: boolean) => void) | null = null;
   let setConnectingState: ((v: boolean) => void) | null = null;
@@ -64,12 +64,13 @@ export function createMockPeer(): {
     off: (key: string): void => {
       handlers.delete(key);
     },
-    send: async (key: string, payload: unknown): Promise<unknown> => {
+    send: (key: string, payload: unknown): Promise<unknown> => {
       sent.push({ key, payload });
-      return undefined;
+      return Promise.resolve(undefined);
     },
-    connect: async (): Promise<void> => {
+    connect: (): Promise<void> => {
       controller.connectCount += 1;
+      return Promise.resolve();
     },
     destroy: (): void => {
       handlers.clear();
@@ -85,7 +86,7 @@ export function createMockPeer(): {
       if (!handler) throw new Error(`no handler registered for "${key}"`);
       let result: unknown;
       await act(async () => {
-        result = await handler(payload as never);
+        result = await handler(payload);
       });
       return result;
     },
@@ -109,7 +110,7 @@ export function createMockPeer(): {
 
     const value = useMemo<FrameLinkContextValue<MessageRegistry>>(
       () => ({
-        frameLink: frameLink as unknown as FrameLinkContextValue<MessageRegistry>["frameLink"],
+        frameLink: frameLink,
         connected,
         connecting,
         error: null,

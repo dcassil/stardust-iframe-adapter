@@ -9,7 +9,7 @@
  * `./host` — a public site bundle must not pull in host overlay code. Only the
  * protocol module and (later) iframe-side code may be re-exported here.
  */
-export * from "./protocol/index.js";
+export * from "./protocol/registry.js";
 
 /* -------------------------------------------------------------------------- */
 /* Iframe-side adapter surface (SIFR-I-0002)                                  */
@@ -91,7 +91,7 @@ export {
   type UseStyleFeatureOptions,
   StyleFeature,
   type StyleFeatureProps,
-} from "./style/index.js";
+} from "./style/barrel.js";
 
 export {
   ATTR_TARGET,

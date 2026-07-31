@@ -18,142 +18,25 @@
 
 import type {
   EditContext,
-  Participant,
   ParticipantsListener,
   PointerPosition,
   PresenceProvider,
   Unsubscribe,
 } from "./PresenceProvider.js";
+import {
+  BroadcastChannelTransport,
+  MemoryTransport,
+  defaultClock,
+  type Identity,
+  type PresenceClock,
+  type PresenceMessage,
+  type Transport,
+} from "./MockPresenceProvider.transport.js";
+import { PresenceRoster } from "./MockPresenceProvider.roster.js";
 
-/* -------------------------------------------------------------------------- */
-/* Wire messages                                                              */
-/* -------------------------------------------------------------------------- */
-
-interface Identity {
-  id: string;
-  name: string;
-  color: string;
-}
-
-type PresenceMessage =
-  | { kind: "join"; from: Identity }
-  | { kind: "pointer"; from: string; pointer: PointerPosition }
-  | { kind: "editContext"; from: string; editContext: EditContext | null }
-  | { kind: "leave"; from: string }
-  | { kind: "heartbeat"; from: string };
-
-/* -------------------------------------------------------------------------- */
-/* Transport abstraction (BroadcastChannel or in-memory fallback)             */
-/* -------------------------------------------------------------------------- */
-
-interface Transport {
-  post(msg: PresenceMessage): void;
-  onMessage(cb: (msg: PresenceMessage) => void): void;
-  close(): void;
-}
-
-/**
- * Module-level in-memory buses keyed by channel name. Used when
- * `BroadcastChannel` is unavailable (jsdom). Like a real `BroadcastChannel`,
- * a sender does NOT receive its own message — self-exclusion is enforced by
- * skipping the posting subscriber, matching the browser transport exactly.
- */
-const memoryBuses = new Map<string, Set<(msg: PresenceMessage) => void>>();
-
-function getMemoryBus(name: string): Set<(msg: PresenceMessage) => void> {
-  let bus = memoryBuses.get(name);
-  if (!bus) {
-    bus = new Set();
-    memoryBuses.set(name, bus);
-  }
-  return bus;
-}
-
-class MemoryTransport implements Transport {
-  private handler: ((msg: PresenceMessage) => void) | null = null;
-  private readonly bus: Set<(msg: PresenceMessage) => void>;
-
-  constructor(private readonly channelName: string) {
-    this.bus = getMemoryBus(channelName);
-  }
-
-  post(msg: PresenceMessage): void {
-    // Deliver to every subscriber except the one that owns this transport
-    // (self-exclusion, mirroring BroadcastChannel semantics). Snapshot first;
-    // handlers may mutate the set.
-    const own = this.handler;
-    const clone = structuredCloneSafe(msg);
-    for (const sub of [...this.bus]) {
-      if (sub === own) continue;
-      sub(clone);
-    }
-  }
-
-  onMessage(cb: (msg: PresenceMessage) => void): void {
-    this.handler = cb;
-    this.bus.add(cb);
-  }
-
-  close(): void {
-    if (this.handler) {
-      this.bus.delete(this.handler);
-      this.handler = null;
-    }
-    if (this.bus.size === 0) {
-      memoryBuses.delete(this.channelName);
-    }
-  }
-}
-
-class BroadcastChannelTransport implements Transport {
-  private readonly channel: BroadcastChannel;
-
-  constructor(channelName: string) {
-    this.channel = new BroadcastChannel(channelName);
-  }
-
-  post(msg: PresenceMessage): void {
-    this.channel.postMessage(msg);
-  }
-
-  onMessage(cb: (msg: PresenceMessage) => void): void {
-    this.channel.onmessage = (ev: MessageEvent<PresenceMessage>): void => {
-      cb(ev.data);
-    };
-  }
-
-  close(): void {
-    this.channel.onmessage = null;
-    this.channel.close();
-  }
-}
-
-/** Defensive clone so in-memory peers cannot share mutable references. */
-function structuredCloneSafe(msg: PresenceMessage): PresenceMessage {
-  if (typeof structuredClone === "function") return structuredClone(msg);
-  return JSON.parse(JSON.stringify(msg)) as PresenceMessage;
-}
-
-/* -------------------------------------------------------------------------- */
-/* Clock injection (deterministic under fake timers)                          */
-/* -------------------------------------------------------------------------- */
-
-/** Minimal timer surface so tests can drive throttle/heartbeat deterministically. */
-export interface PresenceClock {
-  now(): number;
-  setTimeout(fn: () => void, ms: number): number;
-  clearTimeout(handle: number): void;
-  setInterval(fn: () => void, ms: number): number;
-  clearInterval(handle: number): void;
-}
-
-const defaultClock: PresenceClock = {
-  now: () => Date.now(),
-  setTimeout: (fn, ms) => setTimeout(fn, ms) as unknown as number,
-  clearTimeout: (h) => clearTimeout(h),
-  setInterval: (fn, ms) => setInterval(fn, ms) as unknown as number,
-  clearInterval: (h) => clearInterval(h),
-};
+// Re-export the injectable clock type so `./presence` consumers and the
+// SocketIo adapter keep importing it from this module (public API unchanged).
+export type { PresenceClock };
 
 /* -------------------------------------------------------------------------- */
 /* Options                                                                    */
@@ -188,11 +71,6 @@ export interface MockPresenceProviderOptions {
 /* MockPresenceProvider                                                        */
 /* -------------------------------------------------------------------------- */
 
-interface RemoteRecord {
-  participant: Participant;
-  lastSeen: number;
-}
-
 export class MockPresenceProvider implements PresenceProvider {
   private readonly channelName: string;
   private readonly self: Identity;
@@ -204,7 +82,9 @@ export class MockPresenceProvider implements PresenceProvider {
 
   private transport: Transport | null = null;
   private readonly listeners = new Set<ParticipantsListener>();
-  private readonly remotes = new Map<string, RemoteRecord>();
+  private readonly roster = new PresenceRoster(() => {
+    this.post({ kind: "join", from: this.self });
+  });
 
   private heartbeatHandle: number | null = null;
   private staleSweepHandle: number | null = null;
@@ -236,7 +116,9 @@ export class MockPresenceProvider implements PresenceProvider {
       ? new BroadcastChannelTransport(this.channelName)
       : new MemoryTransport(this.channelName);
 
-    this.transport.onMessage((msg) => this.handleMessage(msg));
+    this.transport.onMessage((msg) => {
+      this.handleMessage(msg);
+    });
     this.post({ kind: "join", from: this.self });
 
     if (this.heartbeatMs > 0) {
@@ -271,7 +153,7 @@ export class MockPresenceProvider implements PresenceProvider {
     }
     this.transport.close();
     this.transport = null;
-    this.remotes.clear();
+    this.roster.clear();
     this.pendingPointer = null;
     this.lastPointerSent = 0;
   }
@@ -279,7 +161,7 @@ export class MockPresenceProvider implements PresenceProvider {
   subscribe(cb: ParticipantsListener): Unsubscribe {
     this.listeners.add(cb);
     // Emit the current snapshot immediately so late subscribers are consistent.
-    cb(this.snapshot());
+    cb(this.roster.snapshot());
     return () => {
       this.listeners.delete(cb);
     };
@@ -329,8 +211,8 @@ export class MockPresenceProvider implements PresenceProvider {
     const now = this.clock.now();
     switch (msg.kind) {
       case "join": {
-        const known = this.remotes.has(msg.from.id);
-        this.touch(msg.from, now);
+        const known = this.roster.has(msg.from.id);
+        this.roster.touch(msg.from, now);
         // Reply ONLY to a newly-seen peer so the newcomer learns we exist.
         // Replying unconditionally would ping-pong forever on a synchronous
         // transport (the in-memory bus); guarding on `known` makes join
@@ -341,18 +223,18 @@ export class MockPresenceProvider implements PresenceProvider {
         break;
       }
       case "heartbeat": {
-        const rec = this.remotes.get(fromId);
+        const rec = this.roster.get(fromId);
         if (rec) rec.lastSeen = now;
         else this.post({ kind: "join", from: this.self });
         return; // No participant-list change on a bare heartbeat.
       }
       case "pointer": {
-        const rec = this.ensure(fromId, now);
+        const rec = this.roster.ensure(fromId, now);
         rec.participant = { ...rec.participant, pointer: msg.pointer };
         break;
       }
       case "editContext": {
-        const rec = this.ensure(fromId, now);
+        const rec = this.roster.ensure(fromId, now);
         const next = { ...rec.participant };
         if (msg.editContext) next.editContext = msg.editContext;
         else delete next.editContext;
@@ -360,69 +242,23 @@ export class MockPresenceProvider implements PresenceProvider {
         break;
       }
       case "leave": {
-        if (!this.remotes.delete(fromId)) return;
+        if (!this.roster.delete(fromId)) return;
         break;
       }
     }
     this.emit();
   }
 
-  /** Ensure a record exists for an id we have not seen a `join` from yet. */
-  private ensure(id: string, now: number): RemoteRecord {
-    let rec = this.remotes.get(id);
-    if (!rec) {
-      rec = {
-        participant: { id, name: id, color: "#888888" },
-        lastSeen: now,
-      };
-      this.remotes.set(id, rec);
-      // Announce ourselves so the peer can fill in our identity too.
-      this.post({ kind: "join", from: this.self });
-    } else {
-      rec.lastSeen = now;
-    }
-    return rec;
-  }
-
-  private touch(identity: Identity, now: number): void {
-    const existing = this.remotes.get(identity.id);
-    if (existing) {
-      existing.participant = {
-        ...existing.participant,
-        name: identity.name,
-        color: identity.color,
-      };
-      existing.lastSeen = now;
-    } else {
-      this.remotes.set(identity.id, {
-        participant: {
-          id: identity.id,
-          name: identity.name,
-          color: identity.color,
-        },
-        lastSeen: now,
-      });
-    }
-  }
-
   private pruneStale(): void {
-    const now = this.clock.now();
-    let changed = false;
-    for (const [id, rec] of this.remotes) {
-      if (now - rec.lastSeen > this.staleTimeoutMs) {
-        this.remotes.delete(id);
-        changed = true;
-      }
-    }
+    const changed = this.roster.pruneStale(
+      this.clock.now(),
+      this.staleTimeoutMs,
+    );
     if (changed) this.emit();
   }
 
-  private snapshot(): Participant[] {
-    return [...this.remotes.values()].map((r) => ({ ...r.participant }));
-  }
-
   private emit(): void {
-    const snap = this.snapshot();
+    const snap = this.roster.snapshot();
     for (const cb of this.listeners) cb(snap);
   }
 }

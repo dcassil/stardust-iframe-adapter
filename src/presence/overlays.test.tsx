@@ -22,10 +22,10 @@ class StubProvider implements PresenceProvider {
   private readonly listeners = new Set<ParticipantsListener>();
   private current: Participant[] = [];
 
-  publishPointer(): void {}
-  publishEditContext(): void {}
-  connect(): void {}
-  disconnect(): void {}
+  publishPointer = (): void => undefined;
+  publishEditContext = (): void => undefined;
+  connect = (): void => undefined;
+  disconnect = (): void => undefined;
 
   subscribe(cb: ParticipantsListener): () => void {
     this.listeners.add(cb);
@@ -64,8 +64,8 @@ describe("RemoteCursors (TC-001)", () => {
       { top: 300, left: 200, right: 200, bottom: 300, width: 0, height: 0, x: 200, y: 300 },
       transform,
     );
-    expect(cursor1!.style.left).toBe(`${expected1.left}px`);
-    expect(cursor1!.style.top).toBe(`${expected1.top}px`);
+    expect(cursor1!.style.left).toBe(`${String(expected1.left)}px`);
+    expect(cursor1!.style.top).toBe(`${String(expected1.top)}px`);
 
     // Change scale + scroll; the SAME pointer must move to the mapped position.
     transform = { scale: 0.5, scrollOffset: { x: 40, y: 60 } };
@@ -81,8 +81,8 @@ describe("RemoteCursors (TC-001)", () => {
       { top: 300, left: 200, right: 200, bottom: 300, width: 0, height: 0, x: 200, y: 300 },
       transform,
     );
-    expect(cursor2!.style.left).toBe(`${expected2.left}px`);
-    expect(cursor2!.style.top).toBe(`${expected2.top}px`);
+    expect(cursor2!.style.left).toBe(`${String(expected2.left)}px`);
+    expect(cursor2!.style.top).toBe(`${String(expected2.top)}px`);
     // Confirm it is NOT the raw unscaled pointer.
     expect(cursor2!.style.left).not.toBe("200px");
   });
@@ -99,7 +99,7 @@ describe("RemoteCursors (TC-001)", () => {
       ]);
     });
     expect(container.querySelector('[data-presence-cursor="A"]')).not.toBeNull();
-    act(() => provider.emit([]));
+    act(() => { provider.emit([]); });
     expect(container.querySelector('[data-presence-cursor="A"]')).toBeNull();
   });
 });

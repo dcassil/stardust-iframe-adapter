@@ -16,7 +16,7 @@ import type {
   ChildContent,
   ContentTarget,
   Geometry,
-} from "../protocol/index.js";
+} from "../protocol/registry.js";
 import {
   ATTR_CONTAINER_TARGET,
   ATTR_CONTENT,

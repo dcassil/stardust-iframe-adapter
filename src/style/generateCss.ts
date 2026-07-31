@@ -58,23 +58,14 @@ function escapeSelectorValue(group: string): string {
 }
 
 /**
- * Generate group-scoped CSS text from style values. Pure: no DOM access, no
- * input mutation; equal input yields equal output.
+ * Collapse a value list into `group -> (property -> normalized value)`, dropping
+ * every disallowed property and invalid value. Last write wins per property.
  */
-export function generateCss(
-  styleValues: readonly StyleValue[] | undefined | null,
-  options: GenerateCssOptions = {},
-): string {
-  if (styleValues === undefined || styleValues === null || styleValues.length === 0) {
-    return "";
-  }
-
-  const allowlist = options.allowlist ?? DEFAULT_ALLOWLIST;
-  const important = options.important === true;
-
-  // group -> (property -> normalized value). Last write wins per property.
+function collectByGroup(
+  styleValues: readonly StyleValue[],
+  allowlist: StyleAllowlist,
+): Map<string, Map<string, string>> {
   const byGroup = new Map<string, Map<string, string>>();
-
   for (const entry of styleValues) {
     if (!isAllowed(entry.type, entry.property, allowlist)) continue;
     const normalized = validateValue(entry.property, entry.value);
@@ -87,22 +78,43 @@ export function generateCss(
     }
     props.set(entry.property, normalized);
   }
+  return byGroup;
+}
 
-  const suffix = important ? " !important" : "";
+/** Render one `[data-style-group="G"] { … }` block from its property map. */
+function renderGroupBlock(
+  group: string,
+  props: Map<string, string>,
+  suffix: string,
+): string {
+  const declarations = [...props.entries()]
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .map(([property, value]) => `  ${property}: ${value}${suffix};`)
+    .join("\n");
+  return `[data-style-group="${escapeSelectorValue(group)}"] {\n${declarations}\n}`;
+}
+
+/**
+ * Generate group-scoped CSS text from style values. Pure: no DOM access, no
+ * input mutation; equal input yields equal output.
+ */
+export function generateCss(
+  styleValues: readonly StyleValue[] | undefined | null,
+  options: GenerateCssOptions = {},
+): string {
+  if (styleValues == null || styleValues.length === 0) {
+    return "";
+  }
+
+  const allowlist = options.allowlist ?? DEFAULT_ALLOWLIST;
+  const suffix = options.important === true ? " !important" : "";
+  const byGroup = collectByGroup(styleValues, allowlist);
+
   const blocks: string[] = [];
-
   for (const group of [...byGroup.keys()].sort()) {
     const props = byGroup.get(group);
     if (props === undefined || props.size === 0) continue;
-
-    const declarations = [...props.keys()]
-      .sort()
-      .map((property) => `  ${property}: ${props.get(property)!}${suffix};`)
-      .join("\n");
-
-    blocks.push(
-      `[data-style-group="${escapeSelectorValue(group)}"] {\n${declarations}\n}`,
-    );
+    blocks.push(renderGroupBlock(group, props, suffix));
   }
 
   return blocks.join("\n\n");

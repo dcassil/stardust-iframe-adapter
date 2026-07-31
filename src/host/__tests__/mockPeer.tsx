@@ -18,7 +18,7 @@
 import { act, render, type RenderResult } from "@testing-library/react";
 import type { ReactElement, ReactNode } from "react";
 import { FrameLinkProvider } from "frame-link-react";
-import type { ContentTarget, ScrollState } from "../../protocol/index.js";
+import type { ContentTarget, ScrollState } from "../../protocol/registry.js";
 
 /** A handler registered by the hook via `frameLink.on`. */
 type AnyHandler = (payload: unknown) => unknown;
@@ -39,7 +39,7 @@ export interface MockPeer {
   /** Number of live handlers currently registered for a key. */
   handlerCount(key: string): number;
   /** Calls made to `send`, for assertions. */
-  sends: Array<{ key: string; payload: unknown }>;
+  sends: { key: string; payload: unknown }[];
   /** Whether `destroy` was called. */
   destroyed: boolean;
 }
@@ -50,17 +50,17 @@ export interface MockPeer {
  */
 export function createMockPeer(positions: ContentTarget[]): MockPeer {
   const handlers = new Map<string, Set<AnyHandler>>();
-  const sends: Array<{ key: string; payload: unknown }> = [];
+  const sends: { key: string; payload: unknown }[] = [];
   const state = { destroyed: false };
 
   const frameLink: MockPeer["frameLink"] = {
     connected: false,
-    send: async (key: string, payload: unknown): Promise<unknown> => {
+    send: (key: string, payload: unknown): Promise<unknown> => {
       sends.push({ key, payload });
       if (key === "cms/requestTargetPositions") {
-        return positions;
+        return Promise.resolve(positions);
       }
-      return undefined;
+      return Promise.resolve(undefined);
     },
     on: (key: string, handler: AnyHandler): (() => void) => {
       let set = handlers.get(key);
@@ -70,14 +70,15 @@ export function createMockPeer(positions: ContentTarget[]): MockPeer {
       }
       set.add(handler);
       return (): void => {
-        set?.delete(handler);
+        set.delete(handler);
       };
     },
     off: (key: string): void => {
       handlers.delete(key);
     },
-    connect: async (): Promise<void> => {
+    connect: (): Promise<void> => {
       frameLink.connected = true;
+      return Promise.resolve();
     },
     destroy: (): void => {
       state.destroyed = true;

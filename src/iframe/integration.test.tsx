@@ -11,7 +11,7 @@ import { StardustAdapterProvider } from "./StardustAdapterProvider.js";
 import { EditableTarget } from "./EditableTarget.js";
 import { createMockPeer } from "./testing/mock-peer.js";
 import { CHANNELS } from "./frameLink.js";
-import type { ContentPayload, ContentTarget } from "../protocol/index.js";
+import type { ContentPayload, ContentTarget } from "../protocol/registry.js";
 
 /* -------------------------------------------------------------------------- */
 /* Controllable frame + observer environment                                  */
@@ -35,7 +35,7 @@ function flushFrame(): void {
   const cbs = rafCbs;
   rafCbs = [];
   act(() => {
-    cbs.forEach((cb) => cb(0));
+    cbs.forEach((cb) => { cb(0); });
   });
 }
 
@@ -81,7 +81,7 @@ function stubRects(): void {
           toJSON() {
             return this;
           },
-        }) as DOMRect;
+        });
     });
 }
 
@@ -155,7 +155,7 @@ describe("iframe adapter integration (mock frame-link peer)", () => {
         window.dispatchEvent(new Event("scroll"));
         window.dispatchEvent(new Event("resize"));
       }
-      MockObserver.instances.forEach((o) => o.callback());
+      MockObserver.instances.forEach((o) => { o.callback(); });
     });
 
     // Not yet pushed — coalesced into the pending frame.

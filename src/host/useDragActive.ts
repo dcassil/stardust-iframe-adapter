@@ -79,7 +79,9 @@ export function useDragActive(): boolean {
   const [value, setValue] = useState<boolean>(active);
 
   useEffect(() => {
-    const listener: Listener = (next) => setValue(next);
+    const listener: Listener = (next) => {
+      setValue(next);
+    };
     subscribers.add(listener);
     install();
     // Sync in case the drag state changed between render and effect.

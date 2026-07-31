@@ -44,12 +44,77 @@ function bucketFor(contentType: string): StyleElementType {
   return contentType === "container" ? "container" : "text";
 }
 
+/** The allowlisted style controls for one selected item's group/bucket. */
+function StyleControls({
+  styleGroup,
+  type,
+}: {
+  styleGroup: string;
+  type: StyleElementType;
+}): ReactNode {
+  const sendStyles = useSendStyles();
+
+  /** Send a single validated declaration, dropping invalid candidates. */
+  const send = (property: string, value: string | null): void => {
+    if (value === null) return; // rejected by the validator — never send.
+    const payload: StyleUpdatePayload = { styleGroup, type, property, value };
+    void sendStyles(payload);
+  };
+
+  const onColor = (e: ChangeEvent<HTMLInputElement>): void => {
+    send("color", validateColor(e.target.value));
+  };
+  const onFontSize = (e: ChangeEvent<HTMLInputElement>): void => {
+    send("font-size", validatePx(e.target.value));
+  };
+
+  return (
+    <section
+      className="panel"
+      data-testid="style-panel"
+      data-style-group={styleGroup}
+    >
+      <h2 className="panel__title">Style</h2>
+      <dl className="panel__meta">
+        <dt>group</dt>
+        <dd>{styleGroup}</dd>
+        <dt>type</dt>
+        <dd>{type}</dd>
+      </dl>
+
+      {isAllowed(type, "color") && (
+        <label className="panel__field">
+          <span>Color</span>
+          <input
+            type="color"
+            defaultValue="#111111"
+            onChange={onColor}
+            data-testid="style-color"
+          />
+        </label>
+      )}
+
+      {isAllowed(type, "font-size") && (
+        <label className="panel__field">
+          <span>Font size (px)</span>
+          <input
+            type="number"
+            min={0}
+            defaultValue={16}
+            onChange={onFontSize}
+            data-testid="style-font-size"
+          />
+        </label>
+      )}
+    </section>
+  );
+}
+
 export function StylePanel({
   selectedTargetId,
   selectedContentId,
 }: StylePanelProps): ReactNode {
   const { snapshot } = useContentStore();
-  const sendStyles = useSendStyles();
 
   const selected = useMemo(() => {
     if (!selectedTargetId || !selectedContentId) return undefined;
@@ -68,72 +133,10 @@ export function StylePanel({
     );
   }
 
-  const styleGroup = selected.content.styleGroup ?? selected.content.type;
-  const type = bucketFor(selected.content.type);
-
-  /** Send a single validated declaration, dropping invalid candidates. */
-  const send = (
-    property: string,
-    value: string | null,
-  ): void => {
-    if (value === null) return; // rejected by the validator — never send.
-    const payload: StyleUpdatePayload = {
-      styleGroup,
-      type,
-      property,
-      value,
-    };
-    void sendStyles(payload);
-  };
-
-  const onColor = (e: ChangeEvent<HTMLInputElement>): void => {
-    send("color", validateColor(e.target.value));
-  };
-  const onFontSize = (e: ChangeEvent<HTMLInputElement>): void => {
-    send("font-size", validatePx(e.target.value));
-  };
-
-  const canColor = isAllowed(type, "color");
-  const canFontSize = isAllowed(type, "font-size");
-
   return (
-    <section
-      className="panel"
-      data-testid="style-panel"
-      data-style-group={styleGroup}
-    >
-      <h2 className="panel__title">Style</h2>
-      <dl className="panel__meta">
-        <dt>group</dt>
-        <dd>{styleGroup}</dd>
-        <dt>type</dt>
-        <dd>{type}</dd>
-      </dl>
-
-      {canColor && (
-        <label className="panel__field">
-          <span>Color</span>
-          <input
-            type="color"
-            defaultValue="#111111"
-            onChange={onColor}
-            data-testid="style-color"
-          />
-        </label>
-      )}
-
-      {canFontSize && (
-        <label className="panel__field">
-          <span>Font size (px)</span>
-          <input
-            type="number"
-            min={0}
-            defaultValue={16}
-            onChange={onFontSize}
-            data-testid="style-font-size"
-          />
-        </label>
-      )}
-    </section>
+    <StyleControls
+      styleGroup={selected.content.styleGroup ?? selected.content.type}
+      type={bucketFor(selected.content.type)}
+    />
   );
 }

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { FrameLinkProvider } from "frame-link-react";
-import type { ContentTarget, Geometry } from "../protocol/index.js";
+import type { ContentTarget, Geometry } from "../protocol/registry.js";
 import { mapGeometry } from "./mapGeometry.js";
 import { useStardustHost } from "./useStardustHost.js";
 import { createMockPeer, scrollState, type MockPeer } from "./__tests__/mockPeer.js";

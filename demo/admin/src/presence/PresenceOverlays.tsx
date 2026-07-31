@@ -76,7 +76,9 @@ export function PresenceOverlays({
       provider.publishPointer({ x, y });
     };
     document.addEventListener("pointermove", onMove);
-    return () => document.removeEventListener("pointermove", onMove);
+    return () => {
+      document.removeEventListener("pointermove", onMove);
+    };
   }, [provider]);
 
   const lockTargets = useMemo<LockTarget[]>(

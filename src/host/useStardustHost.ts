@@ -15,45 +15,31 @@
  * Must be used inside a `frame-link-react` `FrameLinkProvider` configured with
  * `options.targetOrigin` set to the same explicit origin passed here (never
  * `"*"`) — the provider owns the frame-link instance; this hook drives it.
+ *
+ * Internal building blocks live in `useStardustHost.internals.ts` (split out to
+ * respect the module size budget; not part of the public surface).
  */
 
 import type { RefObject } from "react";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import {
-  useConnection,
-  useHandler,
-  useSend,
-} from "frame-link-react";
-import type { ContentTarget, ChildContent } from "../protocol/index.js";
-import { mapGeometry, type MappedGeometry } from "./mapGeometry.js";
+import { useMemo } from "react";
+import { useConnection, useSend } from "frame-link-react";
 import type {
   ConnectionState,
   OperationCallbacks,
 } from "./operations.js";
 import type { StardustFrameLinkRegistry } from "./registry.js";
+import {
+  mapTargets,
+  useConnectionLifecycle,
+  useIframeScale,
+  useStreamedGeometry,
+  type MappedChild,
+  type MappedTarget,
+} from "./useStardustHost.internals.js";
 
-/** A content item with its geometry projected into host coordinates. */
-export interface MappedChild {
-  contentId: string;
-  index: number;
-  isContainer: boolean;
-  styleGroup: string;
-  geometry: MappedGeometry;
-}
+export type { MappedChild, MappedTarget };
 
-/** A target with its geometry (and its children's) mapped to host coordinates. */
-export interface MappedTarget {
-  targetId: string;
-  isContainer: boolean;
-  geometry: MappedGeometry;
-  children: MappedChild[];
-}
+type HostRegistry = StardustFrameLinkRegistry;
 
 /**
  * Options for {@link useStardustHost}. Extends {@link OperationCallbacks} so the
@@ -90,14 +76,6 @@ export interface UseStardustHostResult {
   callbacks: OperationCallbacks;
 }
 
-type HostRegistry = StardustFrameLinkRegistry;
-
-/** Snapshot of the scroll offset in iframe (unscaled) coordinates. */
-interface ScrollOffset {
-  x: number;
-  y: number;
-}
-
 /**
  * Establish and drive the host-side frame-link connection for an iframe, and
  * return its targets mapped into host coordinates.
@@ -119,157 +97,24 @@ export function useStardustHost(
     "cms/requestTargetPositions",
   );
 
-  // Raw (iframe-space) state. Coordinate mapping is derived, not stored.
-  const [rawTargets, setRawTargets] = useState<ContentTarget[]>([]);
-  const [scrollOffset, setScrollOffset] = useState<ScrollOffset>({ x: 0, y: 0 });
-  const [scale, setScale] = useState(1);
+  // Raw (iframe-space) geometry + derived scale. Mapping is computed, not stored.
+  const scale = useIframeScale(iframeRef);
+  const { rawTargets, scrollOffset, setRawTargets } =
+    useStreamedGeometry(headerOffset);
 
-  /* ---------------------------------------------------------------------- */
-  /* Coalesced scroll commits (NFR-003)                                     */
-  /* ---------------------------------------------------------------------- */
+  useConnectionLifecycle({
+    iframeRef,
+    origin,
+    connect,
+    requestPositions,
+    setRawTargets,
+  });
 
-  // Latest pending scroll, plus a scheduled-flush guard. Rapid scroll messages
-  // update the ref synchronously but commit to React state at most once per
-  // animation frame (or microtask, when rAF is unavailable — e.g. jsdom).
-  const pendingScrollRef = useRef<ScrollOffset | null>(null);
-  const flushScheduledRef = useRef(false);
-
-  const scheduleScrollFlush = useCallback((): void => {
-    if (flushScheduledRef.current) {
-      return;
-    }
-    flushScheduledRef.current = true;
-
-    const flush = (): void => {
-      flushScheduledRef.current = false;
-      const next = pendingScrollRef.current;
-      pendingScrollRef.current = null;
-      if (next !== null) {
-        setScrollOffset(next);
-      }
-    };
-
-    if (typeof requestAnimationFrame === "function") {
-      requestAnimationFrame(flush);
-    } else {
-      queueMicrotask(flush);
-    }
-  }, []);
-
-  /* ---------------------------------------------------------------------- */
-  /* Streamed message subscriptions                                          */
-  /* ---------------------------------------------------------------------- */
-
-  // iframe → host: fresh target/content geometry.
-  useHandler<HostRegistry, "cms/sendElementPositions">(
-    "cms/sendElementPositions",
-    useCallback((targets: ContentTarget[]): void => {
-      setRawTargets(targets);
-    }, []),
+  // Derive mapped targets in a single pass over a consistent snapshot.
+  const targets = useMemo(
+    (): MappedTarget[] => mapTargets(rawTargets, { scale, scrollOffset }),
+    [rawTargets, scale, scrollOffset],
   );
-
-  // iframe → host: scroll state. `h` carries scrollX (see protocol note).
-  useHandler<HostRegistry, "cms/sendScrollPositions">(
-    "cms/sendScrollPositions",
-    useCallback(
-      (scroll: { h: number; y: number }): void => {
-        pendingScrollRef.current = {
-          x: scroll.h,
-          y: scroll.y + headerOffset,
-        };
-        scheduleScrollFlush();
-      },
-      [headerOffset, scheduleScrollFlush],
-    ),
-  );
-
-  /* ---------------------------------------------------------------------- */
-  /* Connection lifecycle + initial position request                         */
-  /* ---------------------------------------------------------------------- */
-
-  useEffect((): (() => void) | undefined => {
-    const target = iframeRef.current?.contentWindow;
-    if (!target) {
-      return undefined;
-    }
-
-    let cancelled = false;
-
-    void (async (): Promise<void> => {
-      try {
-        await connect(target);
-        if (cancelled) {
-          return;
-        }
-        const targets = await requestPositions();
-        if (!cancelled && targets) {
-          setRawTargets(targets);
-        }
-      } catch {
-        // Connection/handshake errors surface through `useConnection().error`,
-        // which is folded into `connectionState` below.
-      }
-    })();
-
-    return (): void => {
-      cancelled = true;
-    };
-  }, [iframeRef, origin, connect, requestPositions]);
-
-  /* ---------------------------------------------------------------------- */
-  /* Scale tracking via ResizeObserver (REQ-006)                             */
-  /* ---------------------------------------------------------------------- */
-
-  useEffect((): (() => void) | undefined => {
-    const iframe = iframeRef.current;
-    if (!iframe || typeof ResizeObserver === "undefined") {
-      return undefined;
-    }
-
-    // scale = container (on-screen) width / document (iframe content) width,
-    // mirroring `useFrame.tsx`. The container is the iframe's offset parent
-    // (its host-side wrapper); fall back to the iframe box itself.
-    const container = iframe.parentElement ?? iframe;
-
-    const recompute = (): void => {
-      const documentWidth = iframe.offsetWidth;
-      const containerWidth = container.getBoundingClientRect().width;
-      if (documentWidth > 0 && containerWidth > 0) {
-        setScale(containerWidth / documentWidth);
-      }
-    };
-
-    const observer = new ResizeObserver(recompute);
-    observer.observe(iframe);
-    if (container !== iframe) {
-      observer.observe(container);
-    }
-    recompute();
-
-    return (): void => {
-      observer.disconnect();
-    };
-  }, [iframeRef]);
-
-  /* ---------------------------------------------------------------------- */
-  /* Derive mapped targets (single map pass over a consistent snapshot)      */
-  /* ---------------------------------------------------------------------- */
-
-  const targets = useMemo((): MappedTarget[] => {
-    const transform = { scale, scrollOffset };
-    return rawTargets.map((target): MappedTarget => ({
-      targetId: target.targetId,
-      isContainer: target.isContainer,
-      geometry: mapGeometry(target.geometry, transform),
-      children: target.children.map((child: ChildContent): MappedChild => ({
-        contentId: child.contentId,
-        index: child.index,
-        isContainer: child.isContainer,
-        styleGroup: child.styleGroup,
-        geometry: mapGeometry(child.geometry, transform),
-      })),
-    }));
-  }, [rawTargets, scale, scrollOffset]);
 
   const connectionState: ConnectionState = error
     ? "error"

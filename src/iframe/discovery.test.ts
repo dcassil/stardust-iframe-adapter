@@ -133,7 +133,7 @@ describe("discoverTargets", () => {
     `);
     document
       .querySelectorAll<HTMLElement>("[data-cms]")
-      .forEach((el) => stubRect(el, { top: 0, left: 0, width: 10, height: 10 }));
+      .forEach((el) => { stubRect(el, { top: 0, left: 0, width: 10, height: 10 }); });
 
     const ids = discoverTargets(document).map((t) => t.targetId);
     expect(ids).toEqual(["a", "b", "c"]);
@@ -149,7 +149,7 @@ describe("discoverTargets", () => {
     `);
     document
       .querySelectorAll<HTMLElement>("[data-cms], [data-cms-content]")
-      .forEach((el) => stubRect(el, { top: 0, left: 0, width: 20, height: 20 }));
+      .forEach((el) => { stubRect(el, { top: 0, left: 0, width: 20, height: 20 }); });
 
     const target = discoverTargets(document)[0]!;
 
@@ -173,7 +173,7 @@ describe("discoverTargets", () => {
     `);
     document
       .querySelectorAll<HTMLElement>("[data-cms]")
-      .forEach((el) => stubRect(el, { top: 0, left: 0, width: 30, height: 30 }));
+      .forEach((el) => { stubRect(el, { top: 0, left: 0, width: 30, height: 30 }); });
 
     const [grid, plain] = discoverTargets(document);
     expect(grid!.isContainer).toBe(true);
@@ -221,7 +221,7 @@ describe("discoverTargets", () => {
     const col = document.querySelector<HTMLElement>("#col")!;
     const inner = document.querySelector<HTMLElement>("#inner")!;
     [outer, inner].forEach((el) =>
-      stubRect(el, { top: 0, left: 0, width: 10, height: 10 })
+      { stubRect(el, { top: 0, left: 0, width: 10, height: 10 }); }
     );
     stubRect(col, { top: 40, left: 0, width: 100, height: 50 });
 
@@ -240,7 +240,7 @@ describe("discoverTargets", () => {
     `);
     document
       .querySelectorAll<HTMLElement>("[data-cms]")
-      .forEach((el) => stubRect(el, { top: 0, left: 0, width: 10, height: 10 }));
+      .forEach((el) => { stubRect(el, { top: 0, left: 0, width: 10, height: 10 }); });
 
     const scope = document.querySelector<HTMLElement>("#scope")!;
     const ids = discoverTargets(scope).map((t) => t.targetId);

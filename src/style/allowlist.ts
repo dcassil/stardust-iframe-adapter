@@ -149,7 +149,7 @@ export const validatePx: ValueValidator = (value) => {
     n = Number(m[1]);
   }
   if (n === null || !Number.isFinite(n) || n < 0) return null;
-  return `${n}px`;
+  return `${String(n)}px`;
 };
 
 /**

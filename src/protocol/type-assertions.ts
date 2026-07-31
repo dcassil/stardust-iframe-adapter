@@ -16,15 +16,12 @@ import type {
   ScrollState,
   SerializableRect,
   StardustMessageKey,
-} from "./index.js";
-import { MESSAGE_KEYS } from "./index.js";
+} from "./registry.js";
+import { MESSAGE_KEYS } from "./registry.js";
 
 /** Assert two types are mutually assignable (structurally equal). */
 type Expect<T extends true> = T;
-type Equal<A, B> =
-  (<T>() => T extends A ? 1 : 2) extends <T>() => T extends B ? 1 : 2
-    ? true
-    : false;
+type Equal<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
 
 /* --- Registry request/response inference --------------------------------- */
 
