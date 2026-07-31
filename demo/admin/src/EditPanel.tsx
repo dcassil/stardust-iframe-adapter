@@ -1,12 +1,12 @@
 /**
  * `EditPanel` — the demo's selection-aware field editor.
  *
- * A thin custom replacement for the dashboard's bundled `SidePanel`. It behaves
- * identically (resolves the selected item's block type from the registry and
- * renders its `renderField(content, onEdit)`), but routes each edit through BOTH
- * `useContentStore().apply` AND the shell re-inject bridge (see
- * {@link useReinject}) — so a field edit is pushed into the iframe live, which the
- * bundled panel does not do (the shell only re-injects on dispatch/connect).
+ * A thin custom replacement for the dashboard's bundled `SidePanel`. It resolves
+ * the selected item's block type from the registry and renders its
+ * `renderField(content, onEdit)`, routing each edit through
+ * `useContentStore().apply`. With dashboard 0.1.2 the shell re-injects on EVERY
+ * store snapshot change, so an `edit` op applied here reaches the iframe live
+ * automatically — the old re-inject bridge workaround is gone.
  */
 
 import { useMemo, type ReactNode } from "react";
@@ -17,7 +17,6 @@ import {
   type BlockFieldPatch,
 } from "@stardust-cms/dashboard";
 import type { CmsContent } from "@stardust-cms/iframe-adapter/protocol";
-import { useReinject } from "./host-bridge";
 
 export interface EditPanelProps {
   blockTypes: BlockTypeRegistry;
@@ -31,7 +30,6 @@ export function EditPanel({
   selectedContentId,
 }: EditPanelProps): ReactNode {
   const { snapshot, apply } = useContentStore();
-  const reinject = useReinject();
 
   const selected = useMemo(() => {
     if (!selectedTargetId || !selectedContentId) return undefined;
@@ -59,8 +57,8 @@ export function EditPanel({
       contentId: selected.contentId,
       patch,
     });
-    // Push the updated snapshot into the iframe via the shell's dispatch path.
-    reinject(selected.targetId, selected.contentId);
+    // The shell re-injects on this snapshot change (dashboard 0.1.2), so the
+    // edit reaches the iframe live with no further action here.
   };
 
   return (

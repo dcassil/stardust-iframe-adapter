@@ -11,22 +11,29 @@
  *     the shared demo content model),
  *  2. hands it to `HostShell` together with the demo's `text`/`image`
  *     {@link DEMO_BLOCK_TYPES} registry and the explicit iframe origin (never `*`),
- *  3. supplies `renderOverlayChrome` — the bundled {@link Overlays} — which also
- *     mirrors the shell's tracked selection into local state, since the shell
- *     hands selection only to `renderOverlayChrome` and not to the side panel, and
+ *  3. supplies `renderOverlayChrome` — the bundled {@link Overlays} plus presence
+ *     cursors — reading the shell-tracked selection from the chrome parts, and
  *  4. arranges the canvas beside a sidebar (palette / side panel / versioning
  *     controls) via `renderLayout`.
+ *
+ * Selection is read from the dashboard's first-class API (dashboard 0.1.2): the
+ * side panel + presence live inside the shell tree via {@link SidebarPanels},
+ * which calls `useHostSelection()`. There is no render-phase `setState` mirroring
+ * selection into `App` local state anymore (that triggered React's "Cannot update
+ * a component while rendering a different component" warning and desynced the
+ * sidebar).
  *
  * The palette / side panel live in the sidebar (rendered by `renderLayout`), NOT
  * as overlay-layer `children`, so they are not double-rendered over the canvas —
  * `children` is intentionally omitted.
  */
 
-import { useMemo, useRef, useState, type ReactNode } from "react";
+import { useMemo, type ReactNode } from "react";
 import {
   HostShell,
   Overlays,
   Palette,
+  useHostSelection,
   type OverlayChromeParts,
   type HostShellLayoutParts,
 } from "@stardust-cms/dashboard";
@@ -35,101 +42,51 @@ import { DEMO_BLOCK_TYPES } from "./blockTypes";
 import { VersionControls } from "./VersionControls";
 import { EditPanel } from "./EditPanel";
 import { StylePanel } from "./StylePanel";
-import { HostBridgeContext, type Reinject } from "./host-bridge";
 import { SITE_ORIGIN, DESIGN_WIDTH, DESIGN_HEIGHT } from "./config";
 import { PRESENCE_ENABLED } from "./presence/config";
-import { usePresenceSession } from "./presence/usePresenceSession";
+import {
+  usePresenceSession,
+  usePublishEditContext,
+} from "./presence/usePresenceSession";
 import { PresenceOverlays } from "./presence/PresenceOverlays";
 import { PresenceIndicator } from "./presence/PresenceIndicator";
-
-/** The admin's tracked selection, mirrored from the shell's overlay chrome. */
-interface Selection {
-  targetId: string | null;
-  contentId: string | null;
-}
+import type { MockPresenceProvider } from "@stardust-cms/iframe-adapter/presence";
 
 export function App(): ReactNode {
   // Construct the store exactly once (a fresh instance would reset the seed +
   // version history on every render).
   const store = useMemo(() => createDemoContentStore(), []);
-  const [selection, setSelection] = useState<Selection>({
-    targetId: null,
-    contentId: null,
-  });
-  // The shell's `onSelect` callback captured from `renderOverlayChrome` — the
-  // only place the shell exposes a dispatch path. Re-selecting an item through it
-  // triggers the shell's `cms/sendElements` re-injection, which is how side-panel
-  // field edits reach the iframe.
-  const reinjectRef = useRef<Reinject>(() => {});
 
   // Server-less presence session (BroadcastChannel), gated by the build flag.
   // When the flag is off `provider` is null and nothing presence-related mounts.
-  const presenceProvider = usePresenceSession(PRESENCE_ENABLED, selection);
+  // Selection-based edit-context publishing happens inside the shell tree (see
+  // SidebarPanels), where `useHostSelection()` is available.
+  const presenceProvider = usePresenceSession(PRESENCE_ENABLED);
 
-  const renderOverlayChrome = (parts: OverlayChromeParts): ReactNode => {
-    reinjectRef.current = parts.callbacks.onSelect ?? (() => {});
-    // Mirror the shell's tracked selection into our context so the side panel
-    // (in the sidebar) can read it. Guarded by an equality check so the
-    // render-phase setState does not loop.
-    if (
-      parts.selectedTargetId !== selection.targetId ||
-      parts.selectedContentId !== selection.contentId
-    ) {
-      setSelection({
-        targetId: parts.selectedTargetId,
-        contentId: parts.selectedContentId,
-      });
-    }
-    return (
-      <>
-        <Overlays
-          targets={parts.targets}
-          callbacks={parts.callbacks}
-          selectedTargetId={parts.selectedTargetId}
-          selectedContentId={parts.selectedContentId}
-        />
-        {presenceProvider && (
-          <PresenceOverlays
-            provider={presenceProvider}
-            targets={parts.targets}
-          />
-        )}
-      </>
-    );
-  };
-
-  // Stable bridge: delegates to whatever `onSelect` the shell most recently
-  // exposed (kept in the ref), so children get a stable function identity.
-  const reinject = useMemo<Reinject>(
-    () => (targetId, contentId) => reinjectRef.current(targetId, contentId),
-    [],
+  const renderOverlayChrome = (parts: OverlayChromeParts): ReactNode => (
+    <>
+      <Overlays
+        targets={parts.targets}
+        callbacks={parts.callbacks}
+        selectedTargetId={parts.selectedTargetId}
+        selectedContentId={parts.selectedContentId}
+      />
+      {presenceProvider && (
+        <PresenceOverlays provider={presenceProvider} targets={parts.targets} />
+      )}
+    </>
   );
 
   const renderLayout = ({ canvas, status }: HostShellLayoutParts): ReactNode => (
-    <HostBridgeContext.Provider value={reinject}>
-      <div className="admin-layout">
-        <div className="admin-main">
-          {status}
-          {canvas}
-        </div>
-        <aside className="admin-sidebar">
-          <Palette blockTypes={DEMO_BLOCK_TYPES} />
-          <EditPanel
-            blockTypes={DEMO_BLOCK_TYPES}
-            selectedTargetId={selection.targetId}
-            selectedContentId={selection.contentId}
-          />
-          <StylePanel
-            selectedTargetId={selection.targetId}
-            selectedContentId={selection.contentId}
-          />
-          {presenceProvider && (
-            <PresenceIndicator provider={presenceProvider} />
-          )}
-          <VersionControls />
-        </aside>
+    <div className="admin-layout">
+      <div className="admin-main">
+        {status}
+        {canvas}
       </div>
-    </HostBridgeContext.Provider>
+      <aside className="admin-sidebar">
+        <SidebarPanels presenceProvider={presenceProvider} />
+      </aside>
+    </div>
   );
 
   return (
@@ -144,5 +101,42 @@ export function App(): ReactNode {
         renderLayout={renderLayout}
       />
     </div>
+  );
+}
+
+interface SidebarPanelsProps {
+  presenceProvider: MockPresenceProvider | null;
+}
+
+/**
+ * The sidebar's selection-aware contents. Rendered INSIDE the `HostShell` tree
+ * (from `renderLayout`), so it can read the shell-tracked selection via the
+ * dashboard's `useHostSelection()` hook — the clean, warning-free replacement
+ * for the old render-phase `setState` mirror. That selection feeds the field
+ * editor, the style panel, and the presence edit-context publisher.
+ */
+function SidebarPanels({ presenceProvider }: SidebarPanelsProps): ReactNode {
+  const { selectedTargetId, selectedContentId } = useHostSelection();
+
+  usePublishEditContext(presenceProvider, {
+    targetId: selectedTargetId,
+    contentId: selectedContentId,
+  });
+
+  return (
+    <>
+      <Palette blockTypes={DEMO_BLOCK_TYPES} />
+      <EditPanel
+        blockTypes={DEMO_BLOCK_TYPES}
+        selectedTargetId={selectedTargetId}
+        selectedContentId={selectedContentId}
+      />
+      <StylePanel
+        selectedTargetId={selectedTargetId}
+        selectedContentId={selectedContentId}
+      />
+      {presenceProvider && <PresenceIndicator provider={presenceProvider} />}
+      <VersionControls />
+    </>
   );
 }

@@ -5,12 +5,19 @@
  *
  * It is a child of `HostShell`, so it lives inside the shell's `StoreProvider`
  * and reads the injected {@link VceContentStoreAdapter} via `useContentStore()`.
- * Content re-injection into the iframe is owned by the shell: the shell re-injects
- * whatever `apply(op)` returns. So this control drives the iframe indirectly —
- * it mutates the store's clock / view pointer, then dispatches a harmless
- * `select` op through `useContentStore().apply`, which makes the shell re-inject
- * the store's current `getSnapshot()` (draft, live, or a pinned historical
- * version).
+ *
+ * VERSION-NAV STILL NEEDS AN EXPLICIT RE-INJECT (dashboard 0.1.2 does NOT cover
+ * it): the shell re-injects on every change of the `StoreProvider` snapshot, and
+ * that snapshot only advances when an op flows through `useContentStore().apply`.
+ * Publish / view-live / prev / next mutate the adapter's clock / view pointer
+ * DIRECTLY (`vce.publish()` / `vce.setViewVersion()`), bypassing `apply`, so the
+ * provider's snapshot — and hence the shell's re-inject — does NOT fire on its
+ * own. To push the newly-pinned projection into the iframe we therefore still
+ * dispatch a harmless `select` op through `apply` after each nav: `apply` returns
+ * a fresh `getSnapshot()` (draft, live, or the pinned historical version), which
+ * the shell re-injects. This is the MINIMAL mechanism kept for version-nav — the
+ * generic `HostBridgeContext`/`useReinject` plumbing the edit/delete paths used
+ * is gone.
  *
  * Controls:
  *  - **Publish** — `store.publish()` advances live; then re-inject so the iframe
@@ -23,24 +30,25 @@
 import { useCallback, useState, type ReactNode } from "react";
 import { useContentStore } from "@stardust-cms/dashboard";
 import type { VceContentStoreAdapter } from "@demo/shared/store";
-import { useReinject } from "./host-bridge";
 
 /** A target id guaranteed to exist in the seed — used to fire a re-inject `select`. */
 const REINJECT_TARGET = "hero";
 
 export function VersionControls(): ReactNode {
-  const { store } = useContentStore();
+  const { store, apply } = useContentStore();
   const vce = store as VceContentStoreAdapter;
   const [, force] = useState(0);
-  const reinjectItem = useReinject();
 
-  // Re-inject the store's current snapshot into the iframe by re-selecting a seed
-  // target through the shell's dispatch path (which pushes the current
-  // `getSnapshot()` — draft, live, or a pinned version — via `cms/sendElements`).
+  // Re-inject the store's current snapshot into the iframe by dispatching a
+  // no-op `select` op through the shell's store binding. `apply` returns a fresh
+  // `getSnapshot()` (draft, live, or a pinned version) which the shell re-injects
+  // via `cms/sendElements`. `select` preserves the view pointer (see the
+  // adapter's `apply`), so the pinned version survives. `force` re-renders this
+  // control so its state readouts (live/viewing) refresh.
   const reinject = useCallback(() => {
-    reinjectItem(REINJECT_TARGET);
+    apply({ kind: "select", targetId: REINJECT_TARGET });
     force((n) => n + 1);
-  }, [reinjectItem]);
+  }, [apply]);
 
   const live = vce.liveVersion();
   const viewing = vce.viewVersion();
