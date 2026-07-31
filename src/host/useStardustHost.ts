@@ -124,12 +124,6 @@ export function useStardustHost(
   const [scrollOffset, setScrollOffset] = useState<ScrollOffset>({ x: 0, y: 0 });
   const [scale, setScale] = useState(1);
 
-  // Keep option callbacks in a ref so stable identities aren't required.
-  const optionsRef = useRef(options);
-  useEffect((): void => {
-    optionsRef.current = options;
-  }, [options]);
-
   /* ---------------------------------------------------------------------- */
   /* Coalesced scroll commits (NFR-003)                                     */
   /* ---------------------------------------------------------------------- */
@@ -286,11 +280,14 @@ export function useStardustHost(
         : "disconnected";
 
   const callbacks = useMemo<OperationCallbacks>(() => {
-    const opts = optionsRef.current;
+    // Read the current option callbacks DIRECTLY (not `optionsRef.current`,
+    // which lags one render because it's committed in an effect). Reading the
+    // deps directly keeps the bundle in lock-step with the caller's callback
+    // identities, so a no-op → real handler swap is reflected immediately.
     return {
-      ...(opts.onInsert ? { onInsert: opts.onInsert } : {}),
-      ...(opts.onMove ? { onMove: opts.onMove } : {}),
-      ...(opts.onSelect ? { onSelect: opts.onSelect } : {}),
+      ...(options.onInsert ? { onInsert: options.onInsert } : {}),
+      ...(options.onMove ? { onMove: options.onMove } : {}),
+      ...(options.onSelect ? { onSelect: options.onSelect } : {}),
     };
     // Re-bundle when the identity of any callback changes.
   }, [options.onInsert, options.onMove, options.onSelect]);

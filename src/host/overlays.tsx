@@ -6,15 +6,36 @@
  * absolutely-positioned boxes straight from mapped geometry and forward all
  * pointer/drag intent as structured callbacks. They are pure/presentational:
  *
- *  - **No visual styling** beyond `position: absolute` + the four geometry
- *    properties (NFR-004). Consumers pass `className`/`style` to style them; the
- *    demo owns all appearance.
+ *  - **No visual styling** beyond positioning + structural data attributes /
+ *    stable class names (NFR-004). Consumers pass `className`/`style` to style
+ *    them; the demo owns all appearance (bar color, drag-over tint, etc.).
  *  - **No Stardust contexts, no content store** (NFR-002). Every input is a prop;
  *    every output is a callback.
  *  - Geometry is consumed as-is from `MappedGeometry` — never recomputed here
  *    (`mapGeometry` in SIFR-T-0014 is the sole coordinate authority).
+ *
+ * ## Drop-zone model (ported from the prototype)
+ *
+ * The prototype (`CMSTargetAreas.tsx` / `CMSTargetItem.tsx`) built drops from a
+ * per-item TOP zone (drop → item's index) and BOTTOM zone (drop → index + 1),
+ * and a single full-area zone (index 0) for an empty target. Only the active
+ * zone became interactive so the iframe underneath stayed usable. This module
+ * reproduces that structure with stable data attributes:
+ *
+ *  - The target box carries `data-target-id` and, while a drag is over it,
+ *    `data-dragover=""` (tracked with an enter/leave counter so moving across
+ *    child nodes doesn't flicker).
+ *  - Each item renders a `data-drop-zone="top"` (→ its index) and
+ *    `data-drop-zone="bottom"` (→ index + 1) zone. An empty target renders one
+ *    `data-drop-zone="empty"` full-area zone (→ index 0).
+ *  - The zone currently under the pointer during a drag carries
+ *    `data-drop-active=""`, so CSS can render the ~8px insertion bar.
+ *  - Zones set `pointer-events` interactive only while a drag is over the target
+ *    (`data-dragover`); when idle they let clicks fall through to the item's
+ *    select hit-box and to the iframe.
  */
 
+import { useCallback, useRef, useState } from "react";
 import type { CSSProperties, DragEvent, MouseEvent, ReactElement } from "react";
 import type { MappedChild, MappedTarget } from "./useStardustHost.js";
 import type { MappedGeometry } from "./mapGeometry.js";
@@ -36,6 +57,45 @@ function positionStyle(geometry: MappedGeometry): CSSProperties {
   };
 }
 
+/** Default minimum height (px) for a target's droppable area. */
+const DEFAULT_MIN_DROP_HEIGHT = 18;
+
+/**
+ * Identifies the active insertion zone within a target: which content item it
+ * hangs off, and which edge (`top` → item index, `bottom` → index + 1). For an
+ * empty target the single zone resolves to index 0.
+ */
+interface ActiveZone {
+  /** The resolved insert index for a drop in this zone. */
+  index: number;
+  /** The item index the zone belongs to (or `-1` for the empty zone). */
+  itemIndex: number;
+  /** Which edge of the item this zone represents. */
+  edge: "top" | "bottom" | "empty";
+}
+
+/**
+ * Fallback insert-index computation for a drop that lands directly on the target
+ * box rather than on a specific insertion zone (e.g. between zones, or in a gap).
+ *
+ * `offsetY` is the pointer's position relative to the target box's top edge.
+ * Each child's vertical midpoint is taken relative to the same box top; the
+ * result is the number of children the pointer is past — drop-above-first → 0,
+ * between i-1 and i → i, below-last → children.length.
+ */
+function computeInsertIndex(target: MappedTarget, offsetY: number): number {
+  const { children } = target;
+  const targetTop = target.geometry.top;
+  for (let i = 0; i < children.length; i++) {
+    const { top, height } = children[i]!.geometry;
+    const midpoint = top - targetTop + height / 2;
+    if (offsetY < midpoint) {
+      return children[i]!.index;
+    }
+  }
+  return children.length;
+}
+
 /* -------------------------------------------------------------------------- */
 /* ContentItemOverlay                                                         */
 /* -------------------------------------------------------------------------- */
@@ -47,6 +107,11 @@ export interface ContentItemOverlayProps extends OperationCallbacks {
   child: MappedChild;
   /** The item's index within its target. */
   index: number;
+  /**
+   * When `true`, a drag is active over the owning target, so the item box goes
+   * non-interactive to let the insertion zones underneath receive the drag.
+   */
+  dragActive?: boolean;
   /** Optional consumer class name. */
   className?: string;
   /** Optional consumer style, merged after the positioning style. */
@@ -62,6 +127,7 @@ export function ContentItemOverlay({
   targetId,
   child,
   index,
+  dragActive = false,
   onSelect,
   className,
   style,
@@ -87,7 +153,11 @@ export function ContentItemOverlay({
       onClick={handleClick}
       onDragStart={handleDragStart}
       className={className}
-      style={{ ...positionStyle(child.geometry), ...style }}
+      style={{
+        ...positionStyle(child.geometry),
+        ...(dragActive ? { pointerEvents: "none" } : {}),
+        ...style,
+      }}
     />
   );
 }
@@ -99,6 +169,13 @@ export function ContentItemOverlay({
 export interface TargetAreaOverlayProps extends OperationCallbacks {
   /** The target, already mapped to host coordinates. */
   target: MappedTarget;
+  /**
+   * Minimum height (in host px) guaranteed for the target's droppable area, so
+   * short or empty targets stay grabbable. Defaults to {@link DEFAULT_MIN_DROP_HEIGHT}
+   * (18). This only clamps the *drop area's* height; it never shifts the
+   * reported geometry of this or any other target.
+   */
+  minDropHeight?: number;
   /** Optional consumer class name for the target box. */
   className?: string;
   /** Optional consumer style, merged after the positioning style. */
@@ -107,39 +184,22 @@ export interface TargetAreaOverlayProps extends OperationCallbacks {
   itemClassName?: string;
   /** Optional style applied to child `ContentItemOverlay`s. */
   itemStyle?: CSSProperties;
-}
-
-/**
- * Compute the insert index for a drop within this target.
- *
- * `offsetY` is the pointer's position *relative to the target box's top edge*
- * (i.e. `event.clientY - boxRect.top`). Each child's vertical midpoint is taken
- * relative to the same box top (`child.top - target.top + child.height / 2`).
- * The result is the number of children the pointer is past — drop-above-first
- * → 0, between i-1 and i → i, below-last → children.length. Mirrors the
- * prototype's above/below drop zones in `CMSTargetItem.tsx`, collapsed into one
- * continuous computation.
- */
-function computeInsertIndex(target: MappedTarget, offsetY: number): number {
-  const { children } = target;
-  const targetTop = target.geometry.top;
-  for (let i = 0; i < children.length; i++) {
-    const { top, height } = children[i]!.geometry;
-    const midpoint = top - targetTop + height / 2;
-    if (offsetY < midpoint) {
-      return i;
-    }
-  }
-  return children.length;
+  /**
+   * Optional class name applied to each insertion drop-zone (`top`/`bottom`/
+   * `empty`). The active zone additionally carries `data-drop-active`.
+   */
+  zoneClassName?: string;
 }
 
 /**
  * A target drop-area box. Renders one `ContentItemOverlay` per content item
- * (or an empty drop zone when the target has none), and resolves drops into
- * structured insert/move operations dispatched through the callbacks.
+ * plus its TOP/BOTTOM insertion zones (or a single full-area zone when empty),
+ * and resolves drops into structured insert/move operations dispatched through
+ * the callbacks.
  */
 export function TargetAreaOverlay({
   target,
+  minDropHeight = DEFAULT_MIN_DROP_HEIGHT,
   onInsert,
   onMove,
   onSelect,
@@ -147,6 +207,7 @@ export function TargetAreaOverlay({
   style,
   itemClassName,
   itemStyle,
+  zoneClassName,
 }: TargetAreaOverlayProps): ReactElement {
   const callbacks: OperationCallbacks = {
     ...(onInsert ? { onInsert } : {}),
@@ -154,9 +215,51 @@ export function TargetAreaOverlay({
     ...(onSelect ? { onSelect } : {}),
   };
 
-  const handleDragOver = (event: DragEvent<HTMLDivElement>): void => {
+  // Whole-area drag-over state, tracked with an enter/leave counter so moving
+  // the pointer across child nodes doesn't flicker the tint off and on.
+  const [dragOver, setDragOver] = useState(false);
+  const enterCountRef = useRef(0);
+  // The insertion zone currently under the pointer during a drag.
+  const [activeZone, setActiveZone] = useState<ActiveZone | null>(null);
+
+  const clearDrag = useCallback((): void => {
+    enterCountRef.current = 0;
+    setDragOver(false);
+    setActiveZone(null);
+  }, []);
+
+  const handleAreaDragEnter = (): void => {
+    enterCountRef.current += 1;
+    setDragOver(true);
+  };
+
+  const handleAreaDragLeave = (): void => {
+    enterCountRef.current -= 1;
+    if (enterCountRef.current <= 0) {
+      enterCountRef.current = 0;
+      setDragOver(false);
+      setActiveZone(null);
+    }
+  };
+
+  const handleAreaDragOver = (event: DragEvent<HTMLDivElement>): void => {
     // Signal this is a valid drop target so the browser fires `drop`.
     event.preventDefault();
+  };
+
+  const activateZone = (zone: ActiveZone) => (
+    event: DragEvent<HTMLDivElement>,
+  ): void => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!dragOver) {
+      setDragOver(true);
+    }
+    setActiveZone((prev) =>
+      prev && prev.index === zone.index && prev.edge === zone.edge
+        ? prev
+        : zone,
+    );
   };
 
   const dropAt = (event: DragEvent<HTMLDivElement>, index: number): void => {
@@ -167,16 +270,30 @@ export function TargetAreaOverlay({
       index,
     });
     dispatchOp(op, callbacks);
+    clearDrag();
+  };
+
+  const handleZoneDrop = (zone: ActiveZone) => (
+    event: DragEvent<HTMLDivElement>,
+  ): void => {
+    dropAt(event, zone.index);
   };
 
   const handleAreaDrop = (event: DragEvent<HTMLDivElement>): void => {
+    // A drop landing on the target box itself (not a specific zone, which
+    // stops propagation). Resolve via the active zone if one is marked, else
+    // fall back to a midpoint computation over the pointer position.
+    if (activeZone) {
+      dropAt(event, activeZone.index);
+      return;
+    }
     const rect = event.currentTarget.getBoundingClientRect();
     const offsetY = event.clientY - rect.top;
     dropAt(event, computeInsertIndex(target, offsetY));
   };
 
   const handleSelect = (event: MouseEvent<HTMLDivElement>): void => {
-    // Only fire when the target box itself (not a child) was clicked.
+    // Only fire when the target box itself (not a child/zone) was clicked.
     if (event.target === event.currentTarget) {
       onSelect?.(target.targetId);
     }
@@ -184,15 +301,126 @@ export function TargetAreaOverlay({
 
   const hasChildren = target.children.length > 0;
 
+  const isZoneActive = (zone: ActiveZone): boolean =>
+    activeZone !== null &&
+    activeZone.index === zone.index &&
+    activeZone.edge === zone.edge;
+
+  // Zones only capture pointer events while a drag is over the target; when
+  // idle they must not block selection clicks or the iframe underneath.
+  const zonePointerEvents: CSSProperties["pointerEvents"] = dragOver
+    ? "all"
+    : "none";
+
+  // Guarantee a grabbable drop area even for short/empty targets, without
+  // touching the reported geometry (used elsewhere for hit-testing/layout).
+  const dropAreaHeight = Math.max(target.geometry.height, minDropHeight);
+
   return (
     <div
       data-target-id={target.targetId}
-      onDragOver={handleDragOver}
+      {...(dragOver ? { "data-dragover": "" } : {})}
+      onDragEnter={handleAreaDragEnter}
+      onDragLeave={handleAreaDragLeave}
+      onDragOver={handleAreaDragOver}
       onDrop={handleAreaDrop}
       onClick={handleSelect}
       className={className}
-      style={{ ...positionStyle(target.geometry), ...style }}
+      style={{
+        ...positionStyle(target.geometry),
+        // Container stays non-interactive; zones opt back in while dragging.
+        pointerEvents: "none",
+        ...style,
+      }}
     >
+      {/* Droppable area layer, clamped to a minimum grabbable height. */}
+      <div
+        data-drop-area=""
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: dropAreaHeight,
+          pointerEvents: "none",
+        }}
+      >
+        {hasChildren ? (
+          target.children.map((child, i) => {
+            const topZone: ActiveZone = {
+              index: child.index,
+              itemIndex: i,
+              edge: "top",
+            };
+            const bottomZone: ActiveZone = {
+              index: child.index + 1,
+              itemIndex: i,
+              edge: "bottom",
+            };
+            const top = child.geometry.top - target.geometry.top;
+            const height = child.geometry.height;
+            const halfway = height / 2;
+            return (
+              <div key={child.contentId}>
+                <div
+                  data-drop-zone="top"
+                  data-drop-index={topZone.index}
+                  {...(isZoneActive(topZone) ? { "data-drop-active": "" } : {})}
+                  onDragOver={activateZone(topZone)}
+                  onDrop={handleZoneDrop(topZone)}
+                  className={zoneClassName}
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    width: "100%",
+                    top,
+                    height: halfway,
+                    pointerEvents: zonePointerEvents,
+                  }}
+                />
+                <div
+                  data-drop-zone="bottom"
+                  data-drop-index={bottomZone.index}
+                  {...(isZoneActive(bottomZone)
+                    ? { "data-drop-active": "" }
+                    : {})}
+                  onDragOver={activateZone(bottomZone)}
+                  onDrop={handleZoneDrop(bottomZone)}
+                  className={zoneClassName}
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    width: "100%",
+                    top: top + halfway,
+                    height: height - halfway,
+                    pointerEvents: zonePointerEvents,
+                  }}
+                />
+              </div>
+            );
+          })
+        ) : (
+          <div
+            data-drop-zone="empty"
+            data-drop-index={0}
+            {...(isZoneActive({ index: 0, itemIndex: -1, edge: "empty" })
+              ? { "data-drop-active": "" }
+              : {})}
+            onDragOver={activateZone({ index: 0, itemIndex: -1, edge: "empty" })}
+            onDrop={handleZoneDrop({ index: 0, itemIndex: -1, edge: "empty" })}
+            className={zoneClassName}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              pointerEvents: zonePointerEvents,
+            }}
+          />
+        )}
+      </div>
+
       {hasChildren
         ? target.children.map((child) => (
             <ContentItemOverlay
@@ -200,6 +428,7 @@ export function TargetAreaOverlay({
               targetId={target.targetId}
               child={child}
               index={child.index}
+              dragActive={dragOver}
               {...callbacks}
               {...(itemClassName !== undefined ? { className: itemClassName } : {})}
               {...(itemStyle !== undefined ? { style: itemStyle } : {})}

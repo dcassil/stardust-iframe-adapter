@@ -1,6 +1,6 @@
 {
   "name": "@stardust-cms/iframe-adapter",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Typed, framework-agnostic protocol plus iframe/host adapters for building in-iframe visual editors, transported over frame-link.",
   "type": "module",
   "license": "MIT",

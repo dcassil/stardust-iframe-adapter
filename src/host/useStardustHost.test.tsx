@@ -159,6 +159,31 @@ describe("useStardustHost", () => {
     expect(peer.handlerCount("cms/sendScrollPositions")).toBe(0);
   });
 
+  it("returned callbacks.onInsert reflects a NEW onInsert identity swapped in after mount (stale-callback regression)", async () => {
+    const ref = fakeIframeRef();
+
+    const first = vi.fn();
+    const { result, rerender } = renderHook(
+      ({ onInsert }: { onInsert: (t: string, i: number, p: { type: string }) => void }) =>
+        useStardustHost(ref, { origin: "https://iframe.example.com", onInsert }),
+      { wrapper, initialProps: { onInsert: first } },
+    );
+
+    await waitFor(() => {
+      expect(result.current.targets).toHaveLength(1);
+    });
+
+    // Swap in a NEW callback identity after mount.
+    const second = vi.fn();
+    rerender({ onInsert: second });
+
+    // The bundled callback must be the NEW function, not the stale first one.
+    result.current.callbacks.onInsert?.("t1", 0, { type: "text" });
+    expect(second).toHaveBeenCalledTimes(1);
+    expect(second).toHaveBeenCalledWith("t1", 0, { type: "text" });
+    expect(first).not.toHaveBeenCalled();
+  });
+
   it("updates targets when cms/sendElementPositions streams new geometry", async () => {
     const ref = fakeIframeRef();
     const { result } = renderHook(
