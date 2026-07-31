@@ -34,8 +34,13 @@ import { createDemoContentStore } from "@demo/shared/store";
 import { DEMO_BLOCK_TYPES } from "./blockTypes";
 import { VersionControls } from "./VersionControls";
 import { EditPanel } from "./EditPanel";
+import { StylePanel } from "./StylePanel";
 import { HostBridgeContext, type Reinject } from "./host-bridge";
 import { SITE_ORIGIN, DESIGN_WIDTH, DESIGN_HEIGHT } from "./config";
+import { PRESENCE_ENABLED } from "./presence/config";
+import { usePresenceSession } from "./presence/usePresenceSession";
+import { PresenceOverlays } from "./presence/PresenceOverlays";
+import { PresenceIndicator } from "./presence/PresenceIndicator";
 
 /** The admin's tracked selection, mirrored from the shell's overlay chrome. */
 interface Selection {
@@ -57,6 +62,10 @@ export function App(): ReactNode {
   // field edits reach the iframe.
   const reinjectRef = useRef<Reinject>(() => {});
 
+  // Server-less presence session (BroadcastChannel), gated by the build flag.
+  // When the flag is off `provider` is null and nothing presence-related mounts.
+  const presenceProvider = usePresenceSession(PRESENCE_ENABLED, selection);
+
   const renderOverlayChrome = (parts: OverlayChromeParts): ReactNode => {
     reinjectRef.current = parts.callbacks.onSelect ?? (() => {});
     // Mirror the shell's tracked selection into our context so the side panel
@@ -72,12 +81,20 @@ export function App(): ReactNode {
       });
     }
     return (
-      <Overlays
-        targets={parts.targets}
-        callbacks={parts.callbacks}
-        selectedTargetId={parts.selectedTargetId}
-        selectedContentId={parts.selectedContentId}
-      />
+      <>
+        <Overlays
+          targets={parts.targets}
+          callbacks={parts.callbacks}
+          selectedTargetId={parts.selectedTargetId}
+          selectedContentId={parts.selectedContentId}
+        />
+        {presenceProvider && (
+          <PresenceOverlays
+            provider={presenceProvider}
+            targets={parts.targets}
+          />
+        )}
+      </>
     );
   };
 
@@ -102,6 +119,13 @@ export function App(): ReactNode {
             selectedTargetId={selection.targetId}
             selectedContentId={selection.contentId}
           />
+          <StylePanel
+            selectedTargetId={selection.targetId}
+            selectedContentId={selection.contentId}
+          />
+          {presenceProvider && (
+            <PresenceIndicator provider={presenceProvider} />
+          )}
           <VersionControls />
         </aside>
       </div>
