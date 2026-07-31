@@ -16,4 +16,14 @@ export default defineConfig({
     alias: demoAliases,
     dedupe: demoDedupe,
   },
+  build: {
+    rollupOptions: {
+      // `socket.io-client` is a lazy `await import()` inside the library's
+      // optional SocketIoPresenceProvider. The demo uses the mock presence
+      // provider and never connects a socket, so the dependency is absent by
+      // design. Externalizing keeps that dynamic import optional instead of
+      // forcing socket.io-client into the demo's dependencies just to build.
+      external: ["socket.io-client"],
+    },
+  },
 });
