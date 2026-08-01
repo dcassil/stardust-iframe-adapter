@@ -10,8 +10,9 @@
  *   - `protocol` is a LEAF (types + registry; no react/dom runtime).
  *   - `iframe` and `host` each import `protocol` ONLY — never each other.
  *   - `style` lives under the iframe side (may import protocol + iframe).
- *   - `presence` is its own subpath (may import protocol + host geometry types
- *     via the public `./host` entry, expressed as the `host` element).
+ *   - `overlays` is the presence subpath (thin colab-ui-backed cursor/lock
+ *     overlays; may import protocol + host geometry, expressed as the `host`
+ *     element, plus the external `colab-ui` presence core).
  *   - Public barrels (`src/*.ts`) may re-export from any element.
  */
 import js from "@eslint/js";
@@ -62,7 +63,7 @@ const BOUNDARY_ELEMENTS = [
   { type: "iframe", pattern: "src/iframe/**", mode: "file" },
   { type: "style", pattern: "src/style/**", mode: "file" },
   { type: "host", pattern: "src/host/**", mode: "file" },
-  { type: "presence", pattern: "src/presence/**", mode: "file" },
+  { type: "overlays", pattern: "src/overlays/**", mode: "file" },
   { type: "barrel", pattern: "src/*.ts", mode: "file" },
 ];
 
@@ -86,9 +87,9 @@ const BOUNDARY_POLICIES = [
     allow: { to: { element: { types: { anyOf: ["protocol", "host"] } } } },
   },
   {
-    from: { element: { type: "presence" } },
+    from: { element: { type: "overlays" } },
     allow: {
-      to: { element: { types: { anyOf: ["protocol", "host", "presence"] } } },
+      to: { element: { types: { anyOf: ["protocol", "host", "overlays"] } } },
     },
   },
   {
@@ -97,7 +98,7 @@ const BOUNDARY_POLICIES = [
       to: {
         element: {
           types: {
-            anyOf: ["protocol", "iframe", "style", "host", "presence"],
+            anyOf: ["protocol", "iframe", "style", "host", "overlays"],
           },
         },
       },
