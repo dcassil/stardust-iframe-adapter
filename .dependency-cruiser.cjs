@@ -4,7 +4,7 @@
  *   - protocol is a LEAF.
  *   - iframe and host may import protocol ONLY — never each other.
  *   - style (iframe side) may import protocol + iframe.
- *   - presence may import protocol + host (geometry) + itself.
+ *   - overlays may import protocol + host (geometry) + itself.
  *
  * Run: `npm run depcruise`.
  */
@@ -53,37 +53,37 @@ module.exports = {
       name: "protocol-is-leaf",
       severity: "error",
       comment:
-        "protocol is a LEAF: it may not import iframe, host, style, or presence.",
+        "protocol is a LEAF: it may not import iframe, host, style, or overlays.",
       from: { path: "^src/protocol/" },
-      to: { path: "^src/(iframe|host|style|presence)/" },
+      to: { path: "^src/(iframe|host|style|overlays)/" },
     },
     {
       name: "host-only-protocol",
       severity: "error",
       comment: "host may import protocol + host only.",
       from: { path: "^src/host/" },
-      to: { path: "^src/(iframe|style|presence)/" },
+      to: { path: "^src/(iframe|style|overlays)/" },
     },
     {
       name: "iframe-only-protocol",
       severity: "error",
       comment: "iframe may import protocol + iframe only.",
       from: { path: "^src/iframe/" },
-      to: { path: "^src/(host|style|presence)/" },
+      to: { path: "^src/(host|style|overlays)/" },
     },
     {
       name: "style-scope",
       severity: "error",
       comment: "style (iframe side) may import protocol + iframe + style only.",
       from: { path: "^src/style/" },
-      to: { path: "^src/(host|presence)/" },
+      to: { path: "^src/(host|overlays)/" },
     },
     {
-      name: "presence-scope",
+      name: "overlays-scope",
       severity: "error",
       comment:
-        "presence may import protocol + host (geometry) + presence only.",
-      from: { path: "^src/presence/" },
+        "overlays may import protocol + host (geometry) + overlays only.",
+      from: { path: "^src/overlays/" },
       to: { path: "^src/(iframe|style)/" },
     },
   ],
