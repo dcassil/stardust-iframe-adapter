@@ -23,8 +23,7 @@
  * `ScopeId` this produces.
  */
 
-import { asScopeId, type ScopeId } from "colab-ui/react";
-import { isScopeId } from "colab-ui";
+import { asScopeId, isScopeId, type ScopeId } from "colab-ui/react";
 
 /**
  * The adapter's `data-cms` target id: the value of a discoverable target's
