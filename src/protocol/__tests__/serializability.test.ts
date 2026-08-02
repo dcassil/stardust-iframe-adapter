@@ -18,6 +18,7 @@ import {
   contentPayloadFixture,
   contentTargetFixture,
   geometryFixture,
+  pointerStateFixture,
   requestFixtures,
   responseFixtures,
   scrollStateFixture,
@@ -41,6 +42,11 @@ describe("protocol payload serializability", () => {
 
   it("ScrollState round-trips losslessly", () => {
     assertRoundTrips(scrollStateFixture);
+  });
+
+  it("PointerState round-trips losslessly", () => {
+    assertRoundTrips(pointerStateFixture);
+    assertRoundTrips({ x: 0, y: 0, inside: false });
   });
 
   it("ChildContent round-trips losslessly", () => {

@@ -11,6 +11,7 @@ import type {
   ContentPayload,
   ContentTarget,
   Geometry,
+  PointerState,
   RequestOf,
   ResponseOf,
   ScrollState,
@@ -45,6 +46,11 @@ type _SendScrollPositions_Request = Expect<
   Equal<RequestOf<"cms/sendScrollPositions">, ScrollState>
 >;
 
+type _Pointer_Request = Expect<
+  Equal<RequestOf<"cms/pointer">, PointerState>
+>;
+type _Pointer_Response = Expect<Equal<ResponseOf<"cms/pointer">, void>>;
+
 /* --- Geometry shape ------------------------------------------------------ */
 
 type _GeometryFields = Expect<
@@ -59,6 +65,12 @@ type _SerializableRectAlias = Expect<Equal<SerializableRect, Geometry>>;
 
 type _ScrollStateFields = Expect<
   Equal<keyof ScrollState, "h" | "y" | "isTop" | "isBottom">
+>;
+
+/* --- PointerState shape -------------------------------------------------- */
+
+type _PointerStateFields = Expect<
+  Equal<keyof PointerState, "x" | "y" | "inside">
 >;
 
 /* --- ChildContent shape -------------------------------------------------- */
@@ -106,9 +118,12 @@ export type __ProtocolTypeAssertions = [
   _SendElements_Response,
   _SendElementPositions_Request,
   _SendScrollPositions_Request,
+  _Pointer_Request,
+  _Pointer_Response,
   _GeometryFields,
   _SerializableRectAlias,
   _ScrollStateFields,
+  _PointerStateFields,
   _ChildContentFields,
   _KeysCovered,
 ];

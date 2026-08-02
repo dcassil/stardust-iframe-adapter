@@ -6,7 +6,12 @@ import { FrameLinkProvider } from "frame-link-react";
 import type { ContentTarget, Geometry } from "../protocol/registry.js";
 import { mapGeometry } from "./mapGeometry.js";
 import { useStardustHost } from "./useStardustHost.js";
-import { createMockPeer, scrollState, type MockPeer } from "./__tests__/mockPeer.js";
+import {
+  createMockPeer,
+  pointerState,
+  scrollState,
+  type MockPeer,
+} from "./__tests__/mockPeer.js";
 
 // A mutable holder the mocked `createFrameLink` returns.
 let peer: MockPeer;
@@ -182,6 +187,50 @@ describe("useStardustHost", () => {
     expect(second).toHaveBeenCalledTimes(1);
     expect(second).toHaveBeenCalledWith("t1", 0, { type: "text" });
     expect(first).not.toHaveBeenCalled();
+  });
+
+  it("exposes null pointer initially, updates on cms/pointer, and clears on leave", async () => {
+    const ref = fakeIframeRef();
+    const { result } = renderHook(
+      () => useStardustHost(ref, { origin: "https://iframe.example.com" }),
+      { wrapper },
+    );
+
+    await waitFor(() => {
+      expect(result.current.targets).toHaveLength(1);
+    });
+
+    // Normalized 0..1 pointer is surfaced unchanged (transform-neutral).
+    expect(result.current.pointer).toBeNull();
+
+    act(() => {
+      peer.emit("cms/pointer", pointerState(0.25, 0.75));
+    });
+    await waitFor(() => {
+      expect(result.current.pointer).toEqual({ x: 0.25, y: 0.75 });
+    });
+
+    // A leave (inside: false) resolves to null.
+    act(() => {
+      peer.emit("cms/pointer", pointerState(0, 0, false));
+    });
+    await waitFor(() => {
+      expect(result.current.pointer).toBeNull();
+    });
+  });
+
+  it("subscribes to cms/pointer and tears the handler down on unmount", async () => {
+    const ref = fakeIframeRef();
+    const { unmount, result } = renderHook(
+      () => useStardustHost(ref, { origin: "https://iframe.example.com" }),
+      { wrapper },
+    );
+    await waitFor(() => {
+      expect(result.current.targets).toHaveLength(1);
+    });
+    expect(peer.handlerCount("cms/pointer")).toBeGreaterThan(0);
+    unmount();
+    expect(peer.handlerCount("cms/pointer")).toBe(0);
   });
 
   it("updates targets when cms/sendElementPositions streams new geometry", async () => {

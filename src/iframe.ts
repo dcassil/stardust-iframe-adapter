@@ -48,6 +48,18 @@ export {
 export { readScrollState } from "./iframe/scroll-state.js";
 export { rafThrottle, type RafThrottled } from "./iframe/raf-throttle.js";
 
+// Opt-in pointer streaming (SIFR-I-0007). Tree-shakeable: import only when
+// rendering host-side presence cursors over the iframe.
+export {
+  usePointerPublishing,
+  type PointerPublishingOptions,
+} from "./iframe/usePointerPublishing.js";
+export {
+  readPointerState,
+  POINTER_LEFT,
+  type PointerLike,
+} from "./iframe/pointer-state.js";
+
 // Components + attribute contract (SIFR-T-0016).
 export {
   EditableTarget,
