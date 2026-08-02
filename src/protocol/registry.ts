@@ -63,6 +63,43 @@ export interface ScrollState {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Pointer state                                                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Pointer position streamed iframe → host over `cms/pointer` (SIFR-I-0007).
+ *
+ * The parent document cannot observe `pointermove` events that occur over an
+ * embedded iframe — they are delivered to the iframe's own document. To let a
+ * host place a collaboration cursor over the iframe, the iframe captures its own
+ * pointer and streams it up as this payload.
+ *
+ * COORDINATE CONTRACT (both sides MUST agree):
+ * - `x` / `y` are NORMALIZED to the range `0..1` of the iframe's design/viewport
+ *   space (x = clientX / viewport width, y = clientY / viewport height). They are
+ *   transform-neutral: they do NOT bake in the host's render scale, scroll, or
+ *   stage box. The host/dashboard forwards these SAME normalized values; the
+ *   final consumer (e.g. the demo) multiplies them by its own stage/canvas box to
+ *   place the cursor. Values may momentarily fall slightly outside `0..1` during
+ *   fast moves near an edge; consumers should clamp if they require strict bounds.
+ * - `inside` is `true` while the pointer is over the iframe. A leave (pointer
+ *   left the iframe, or the iframe blurred) is signalled with
+ *   `{ inside: false, x: 0, y: 0 }`; consumers treat `inside: false` as "no
+ *   pointer" and should ignore the coordinate fields in that case.
+ *
+ * Structured-clone-safe by construction (plain numbers + boolean), consistent
+ * with the {@link Geometry}/{@link ScrollState} serializable-geometry convention.
+ */
+export interface PointerState {
+  /** Normalized horizontal position in `0..1` of the iframe viewport width. */
+  x: number;
+  /** Normalized vertical position in `0..1` of the iframe viewport height. */
+  y: number;
+  /** `true` while the pointer is over the iframe; `false` signals pointer-left. */
+  inside: boolean;
+}
+
+/* -------------------------------------------------------------------------- */
 /* Content targets                                                            */
 /* -------------------------------------------------------------------------- */
 
@@ -248,6 +285,15 @@ export interface StardustMessageRegistry {
   /** iframe → host. Iframe publishes current scroll state. */
   "cms/sendScrollPositions": MessageDefinition<ScrollState>;
 
+  /**
+   * iframe → host. Iframe streams the local user's pointer position over the
+   * iframe as normalized `0..1` coordinates (SIFR-I-0007). See {@link
+   * PointerState} for the full coordinate contract; a leave is signalled with
+   * `inside: false`. This unblocks host-side full-page collaboration cursors,
+   * which otherwise cannot see pointer events that land over the iframe.
+   */
+  "cms/pointer": MessageDefinition<PointerState>;
+
   /** host → iframe. Reserved for SIFR-I-0005 (style rules). */
   "cms/updateStyles": MessageDefinition<StyleUpdatePayload>;
 
@@ -280,6 +326,7 @@ export const MESSAGE_KEYS = {
   "cms/sendElements": { reserved: false },
   "cms/sendElementPositions": { reserved: false },
   "cms/sendScrollPositions": { reserved: false },
+  "cms/pointer": { reserved: false },
   "cms/updateStyles": { reserved: true },
   "cms/presence": { reserved: true },
 } as const satisfies Record<StardustMessageKey, { reserved: boolean }>;

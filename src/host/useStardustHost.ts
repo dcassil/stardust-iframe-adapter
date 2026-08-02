@@ -33,11 +33,13 @@ import {
   useConnectionLifecycle,
   useIframeScale,
   useStreamedGeometry,
+  useStreamedPointer,
+  type HostPointer,
   type MappedChild,
   type MappedTarget,
 } from "./useStardustHost.internals.js";
 
-export type { MappedChild, MappedTarget };
+export type { HostPointer, MappedChild, MappedTarget };
 
 type HostRegistry = StardustFrameLinkRegistry;
 
@@ -67,6 +69,15 @@ export interface UseStardustHostResult {
   targets: MappedTarget[];
   /** Current iframe render scale (container width / document width). */
   scale: number;
+  /**
+   * The local user's latest pointer position over the iframe (SIFR-I-0007), as
+   * NORMALIZED `0..1` coordinates in the iframe's design/viewport space, or
+   * `null` when the pointer is not over the iframe. Transform-neutral: it does
+   * NOT bake in `scale`/scroll — a consumer multiplies `x`/`y` by its own stage
+   * box to place a collaboration cursor. Requires the iframe to opt in via
+   * `StardustAdapterProvider`'s `publishPointer`; stays `null` otherwise.
+   */
+  pointer: HostPointer;
   /** Connection lifecycle state. */
   connectionState: ConnectionState;
   /**
@@ -101,6 +112,7 @@ export function useStardustHost(
   const scale = useIframeScale(iframeRef);
   const { rawTargets, scrollOffset, setRawTargets } =
     useStreamedGeometry(headerOffset);
+  const pointer = useStreamedPointer();
 
   useConnectionLifecycle({
     iframeRef,
@@ -137,5 +149,5 @@ export function useStardustHost(
     // Re-bundle when the identity of any callback changes.
   }, [options.onInsert, options.onMove, options.onSelect]);
 
-  return { targets, scale, connectionState, callbacks };
+  return { targets, scale, pointer, connectionState, callbacks };
 }

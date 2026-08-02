@@ -9,7 +9,11 @@
 import type { RefObject } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useHandler } from "frame-link-react";
-import type { ContentTarget, ChildContent } from "../protocol/registry.js";
+import type {
+  ContentTarget,
+  ChildContent,
+  PointerState,
+} from "../protocol/registry.js";
 import { mapGeometry, type MappedGeometry } from "./mapGeometry.js";
 import type { StardustFrameLinkRegistry } from "./registry.js";
 
@@ -142,6 +146,58 @@ export function useStreamedGeometry(headerOffset: number): StreamedGeometry {
   );
 
   return { rawTargets, scrollOffset, setRawTargets };
+}
+
+/**
+ * The latest iframe pointer position as normalized `0..1` coordinates, or `null`
+ * when the pointer is not over the iframe. This is the transform-neutral value
+ * the iframe streamed; the host/consumer maps it into its own scaled stage box.
+ */
+export type HostPointer = { x: number; y: number } | null;
+
+/**
+ * Subscribe to the iframe's streamed pointer messages (`cms/pointer`,
+ * SIFR-I-0007) and expose the latest normalized position. A `PointerState` with
+ * `inside: false` (pointer left the iframe / iframe blurred) resolves to `null`.
+ * Pointer commits are coalesced to at most one React state update per animation
+ * frame (microtask fallback for jsdom), matching the scroll-stream discipline.
+ */
+export function useStreamedPointer(): HostPointer {
+  const [pointer, setPointer] = useState<HostPointer>(null);
+
+  const pendingRef = useRef<{ value: HostPointer } | null>(null);
+  const flushScheduledRef = useRef(false);
+
+  const scheduleFlush = useCallback((): void => {
+    if (flushScheduledRef.current) return;
+    flushScheduledRef.current = true;
+    const flush = (): void => {
+      flushScheduledRef.current = false;
+      const next = pendingRef.current;
+      pendingRef.current = null;
+      if (next) setPointer(next.value);
+    };
+    if (typeof requestAnimationFrame === "function") {
+      requestAnimationFrame(flush);
+    } else {
+      queueMicrotask(flush);
+    }
+  }, []);
+
+  useHandler<HostRegistry, "cms/pointer">(
+    "cms/pointer",
+    useCallback(
+      (state: PointerState): void => {
+        pendingRef.current = {
+          value: state.inside ? { x: state.x, y: state.y } : null,
+        };
+        scheduleFlush();
+      },
+      [scheduleFlush],
+    ),
+  );
+
+  return pointer;
 }
 
 /** Project raw iframe-space targets into host-viewport coordinates. */

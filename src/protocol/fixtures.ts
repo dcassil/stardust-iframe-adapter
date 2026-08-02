@@ -9,6 +9,7 @@ import type {
   ContentPayload,
   ContentTarget,
   Geometry,
+  PointerState,
   RequestOf,
   ResponseOf,
   ScrollState,
@@ -31,6 +32,12 @@ export const scrollStateFixture: ScrollState = {
   y: 320,
   isTop: false,
   isBottom: false,
+};
+
+export const pointerStateFixture: PointerState = {
+  x: 0.25,
+  y: 0.75,
+  inside: true,
 };
 
 export const childContentFixture: ChildContent = {
@@ -93,11 +100,13 @@ export const requestFixtures = {
   "cms/sendElements": contentPayloadFixture,
   "cms/sendElementPositions": [contentTargetFixture],
   "cms/sendScrollPositions": scrollStateFixture,
+  "cms/pointer": pointerStateFixture,
   "cms/updateStyles": styleUpdatePayloadFixture,
 } satisfies {
   "cms/sendElements": RequestOf<"cms/sendElements">;
   "cms/sendElementPositions": RequestOf<"cms/sendElementPositions">;
   "cms/sendScrollPositions": RequestOf<"cms/sendScrollPositions">;
+  "cms/pointer": RequestOf<"cms/pointer">;
   "cms/updateStyles": RequestOf<"cms/updateStyles">;
 };
 

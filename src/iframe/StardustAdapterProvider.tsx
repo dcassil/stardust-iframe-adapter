@@ -41,6 +41,7 @@ import {
   useStardustSend,
 } from "./frameLink.js";
 import { usePositionPublishing } from "./usePositionPublishing.js";
+import { usePointerPublishing } from "./usePointerPublishing.js";
 
 /** Props for {@link StardustAdapterProvider}. */
 export interface StardustAdapterProviderProps {
@@ -54,12 +55,20 @@ export interface StardustAdapterProviderProps {
    * The DOM root discovery walks. Defaults to `document`. Injectable for tests.
    */
   root?: Document | HTMLElement;
+  /**
+   * Opt in to streaming the local user's pointer position over `cms/pointer`
+   * (SIFR-I-0007), so a host can render a full-page collaboration cursor over
+   * the iframe. Off by default: non-presence consumers pay nothing (the pointer
+   * listener + normalization only run when this is `true`).
+   */
+  publishPointer?: boolean;
 }
 
 export function StardustAdapterProvider({
   children,
   target,
   root,
+  publishPointer = false,
 }: StardustAdapterProviderProps): ReactNode {
   const { connect, connected, connecting } = useConnection();
 
@@ -111,6 +120,7 @@ export function StardustAdapterProvider({
   /* --- Observer + throttled scroll/resize publishing (SIFR-T-0015) ----- */
   const sendPositions = useStardustSend(CHANNELS.sendElementPositions);
   const sendScroll = useStardustSend(CHANNELS.sendScrollPositions);
+  const sendPointer = useStardustSend(CHANNELS.pointer);
 
   usePositionPublishing({
     publishPositions: (positions) => {
@@ -126,6 +136,18 @@ export function StardustAdapterProvider({
       });
     },
     ...(root !== undefined ? { root } : {}),
+  });
+
+  /* --- Opt-in pointer streaming (SIFR-I-0007) -------------------------- */
+  // Capture on the iframe document; the provider's `root` may be an HTMLElement,
+  // but pointer capture is viewport-global, so we intentionally use the document.
+  usePointerPublishing({
+    enabled: publishPointer,
+    publishPointer: (pointer) => {
+      void sendPointer(pointer).catch(() => {
+        /* not connected yet / peer gone */
+      });
+    },
   });
 
   const applyContent = useCallback<StardustContentContextValue["applyContent"]>(

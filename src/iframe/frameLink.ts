@@ -60,5 +60,6 @@ export const CHANNELS = {
   sendElements: "cms/sendElements",
   sendElementPositions: "cms/sendElementPositions",
   sendScrollPositions: "cms/sendScrollPositions",
+  pointer: "cms/pointer",
   updateStyles: "cms/updateStyles",
 } as const satisfies Record<string, StardustMessageKey>;

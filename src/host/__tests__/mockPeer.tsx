@@ -18,7 +18,11 @@
 import { act, render, type RenderResult } from "@testing-library/react";
 import type { ReactElement, ReactNode } from "react";
 import { FrameLinkProvider } from "frame-link-react";
-import type { ContentTarget, ScrollState } from "../../protocol/registry.js";
+import type {
+  ContentTarget,
+  PointerState,
+  ScrollState,
+} from "../../protocol/registry.js";
 
 /** A handler registered by the hook via `frameLink.on`. */
 type AnyHandler = (payload: unknown) => unknown;
@@ -110,6 +114,15 @@ export function createMockPeer(positions: ContentTarget[]): MockPeer {
 /** Convenience: a `ScrollState`. */
 export function scrollState(h: number, y: number): ScrollState {
   return { h, y, isTop: y === 0, isBottom: false };
+}
+
+/** Convenience: a `PointerState`. */
+export function pointerState(
+  x: number,
+  y: number,
+  inside = true,
+): PointerState {
+  return { x, y, inside };
 }
 
 /** Render `ui` inside a real `FrameLinkProvider` (with an explicit origin). */

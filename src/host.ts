@@ -21,6 +21,7 @@ export type {
   UseStardustHostResult,
   MappedTarget,
   MappedChild,
+  HostPointer,
 } from "./host/useStardustHost.js";
 
 export { useDragActive } from "./host/useDragActive.js";
