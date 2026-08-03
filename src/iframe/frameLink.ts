@@ -15,22 +15,10 @@ import {
 import type {
   RequestOf,
   ResponseOf,
+  StardustFrameLinkRegistry,
   StardustMessageKey,
   StardustMessageRegistry,
 } from "../protocol/registry.js";
-
-/**
- * The Stardust registry satisfies frame-link's `MessageRegistry` shape: its
- * `MessageDefinition<Request, Response>` uses a `request` field where frame-link
- * uses `payload`. frame-link's `PayloadOf` reads `["payload"]`, so we bridge the
- * two views with this structural adapter registry — one place, fully typed.
- */
-type StardustFrameLinkRegistry = {
-  [K in StardustMessageKey]: {
-    payload: RequestOf<K>;
-    response: ResponseOf<K>;
-  };
-};
 
 /** Register a handler for a Stardust message key (auto-cleaned on unmount). */
 export function useStardustHandler<K extends StardustMessageKey>(

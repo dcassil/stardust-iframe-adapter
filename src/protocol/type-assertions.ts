@@ -16,6 +16,7 @@ import type {
   ResponseOf,
   ScrollState,
   SerializableRect,
+  StardustFrameLinkRegistry,
   StardustMessageKey,
 } from "./registry.js";
 import { MESSAGE_KEYS } from "./registry.js";
@@ -51,6 +52,47 @@ type _Pointer_Request = Expect<
 >;
 type _Pointer_Response = Expect<Equal<ResponseOf<"cms/pointer">, void>>;
 
+type _FrameLinkRegistry_Keys = Expect<
+  Equal<keyof StardustFrameLinkRegistry, StardustMessageKey>
+>;
+type _FrameLinkRegistry_SendElements = Expect<
+  Equal<
+    StardustFrameLinkRegistry["cms/sendElements"],
+    {
+      payload: RequestOf<"cms/sendElements">;
+      response: ResponseOf<"cms/sendElements">;
+    }
+  >
+>;
+type _FrameLinkRegistry_UpdateStylesPayload = Expect<
+  Equal<
+    StardustFrameLinkRegistry["cms/updateStyles"]["payload"],
+    RequestOf<"cms/updateStyles">
+  >
+>;
+
+/* --- A wrong payload shape is a compile error ---------------------------- */
+// The following is intentionally rejected by the compiler to prove the registry
+// is strict. It is quarantined behind @ts-expect-error so the assertion itself
+// compiles: if the error ever DISAPPEARS (i.e. the wrong shape becomes valid),
+// tsc fails on the unused directive. This is a negative type-assertion TEST, not
+// an escape hatch silencing a real error — the directive IS the assertion.
+{
+  const geometryValue: Geometry = {
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    width: 0,
+    height: 0,
+    x: 0,
+    y: 0,
+  };
+  // @ts-expect-error a Geometry is not a valid ScrollState request payload.
+  const _bad: RequestOf<"cms/sendScrollPositions"> = geometryValue;
+  void _bad;
+}
+
 /* --- Geometry shape ------------------------------------------------------ */
 
 type _GeometryFields = Expect<
@@ -82,27 +124,6 @@ type _ChildContentFields = Expect<
   >
 >;
 
-/* --- A wrong payload shape is a compile error ---------------------------- */
-// The following is intentionally rejected by the compiler to prove the registry
-// is strict. It is quarantined behind @ts-expect-error so the assertion itself
-// compiles: if the error ever DISAPPEARS (i.e. the wrong shape becomes valid),
-// tsc fails on the unused directive.
-{
-  const geometryValue: Geometry = {
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    width: 0,
-    height: 0,
-    x: 0,
-    y: 0,
-  };
-  // @ts-expect-error a Geometry is not a valid ScrollState request payload.
-  const _bad: RequestOf<"cms/sendScrollPositions"> = geometryValue;
-  void _bad;
-}
-
 /* --- Runtime marker covers exactly the registry keys --------------------- */
 
 type _KeysCovered = Expect<
@@ -120,6 +141,9 @@ export type __ProtocolTypeAssertions = [
   _SendScrollPositions_Request,
   _Pointer_Request,
   _Pointer_Response,
+  _FrameLinkRegistry_Keys,
+  _FrameLinkRegistry_SendElements,
+  _FrameLinkRegistry_UpdateStylesPayload,
   _GeometryFields,
   _SerializableRectAlias,
   _ScrollStateFields,

@@ -316,6 +316,18 @@ export type ResponseOf<K extends StardustMessageKey> =
   StardustMessageRegistry[K]["response"];
 
 /**
+ * The Stardust protocol expressed in frame-link's registry shape. Each message
+ * key carries the published protocol request as frame-link's `payload`, with
+ * the response preserved unchanged.
+ */
+export type StardustFrameLinkRegistry = {
+  [K in StardustMessageKey]: {
+    payload: RequestOf<K>;
+    response: ResponseOf<K>;
+  };
+};
+
+/**
  * Runtime marker listing every protocol message key and whether it is reserved.
  * This is the module's ONLY runtime value. It exists so consumers (and tests)
  * can enumerate keys without a DOM/React dependency, and so frame-link handler
